@@ -1,0 +1,634 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		00E560A206CF2E5C78110925 /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = 26B4B9DA0B047557AD29856C /* Components.swift */; };
+		0189F65D3E2659C4F5D57F01 /* WidgetShared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B823DFA477D4FA6885A763D /* WidgetShared.swift */; };
+		05EC9305731F721589317E0A /* cursor.png in Resources */ = {isa = PBXBuildFile; fileRef = 6783DAF996C1688F92AA5FAF /* cursor.png */; };
+		0F17BE2F51FB30F9F5C405E9 /* antigravity.png in Resources */ = {isa = PBXBuildFile; fileRef = F6E126D5EF51C308D698DFA7 /* antigravity.png */; };
+		10C8E4322D93F36C88C710D5 /* LocalActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1916D12EE205C72DB2DBE0C1 /* LocalActivity.swift */; };
+		11179BA32BFA5F16E4227614 /* cursor.png in Resources */ = {isa = PBXBuildFile; fileRef = 6783DAF996C1688F92AA5FAF /* cursor.png */; };
+		113034FA33FED444FBCA4B9C /* AddAccountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5ECC63E1130EBCFD5EBB7661 /* AddAccountView.swift */; };
+		194F4577629AE522435B0C15 /* WidgetRefreshListener.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1455E2FF2155971FC91E615B /* WidgetRefreshListener.swift */; };
+		1BEE90065A825EFA6A54D299 /* QuotaBarApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB84C086A950F5214F7F5307 /* QuotaBarApp.swift */; };
+		1DB9A990A1719542D2210096 /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8C315E9EFF8D7D3886C2DC4 /* Keychain.swift */; };
+		2047C1969D48694869845C6C /* StatusExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 253E68C2300C77071FAAC217 /* StatusExporter.swift */; };
+		255EC7F1EE2D8DADBB321574 /* AppIcon.icns in Resources */ = {isa = PBXBuildFile; fileRef = 15E7A9851FE2929B25A439C5 /* AppIcon.icns */; };
+		3D5D775482F77E906239BFD6 /* AccountSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7090AE9D7962BE39B5675FF5 /* AccountSettingsView.swift */; };
+		458C3CDB1FCE40229574321C /* QuotaBarWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFDF2EEB090720E48D66EB4F /* QuotaBarWidget.swift */; };
+		46810E48F58B0EC76FCEF714 /* copilot.png in Resources */ = {isa = PBXBuildFile; fileRef = 89AE65BE87B4D74A5C57449A /* copilot.png */; };
+		56329A4B56DEAE7C1BFEC4BE /* AntigravityConnector.swift in Sources */ = {isa = PBXBuildFile; fileRef = C855E79A85C6C4DAD60797F2 /* AntigravityConnector.swift */; };
+		56AFB03011A2FA4A2D372E2F /* antigravity.png in Resources */ = {isa = PBXBuildFile; fileRef = F6E126D5EF51C308D698DFA7 /* antigravity.png */; };
+		63EB6DA6DA2A1B11B055FCD8 /* DefaultQuotas.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9ACF47697DBEFBABE027B4E9 /* DefaultQuotas.swift */; };
+		66B3FA7FDAD91A11FADFE17C /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9E51D21195C85AD15ECD3CC /* Models.swift */; };
+		67FE85D3082041C51E939967 /* GeminiConnector.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFFB2D0EB4D7AED5F1E4891A /* GeminiConnector.swift */; };
+		6D3D3C25477CEC2AF1F33B67 /* CopilotConnector.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7881CF5EB5B97E6C4CBFEA5 /* CopilotConnector.swift */; };
+		7999462226EC3651202CA01D /* nvidiaNIM.png in Resources */ = {isa = PBXBuildFile; fileRef = 7F19480BF3D5D651296B5576 /* nvidiaNIM.png */; };
+		7B52245989B50EF787A87414 /* claude.png in Resources */ = {isa = PBXBuildFile; fileRef = B1DDD7B4C4406CBC0430D22F /* claude.png */; };
+		81F51CC9C00F3F83B80DDAC6 /* AppSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 053BAB2C09DA98D829CE16B3 /* AppSettingsView.swift */; };
+		888CD8A358BDC34368F76FBE /* Connector.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0D459BBCA29774A24E95105 /* Connector.swift */; };
+		917A85A349B96447AE6C1837 /* claude.png in Resources */ = {isa = PBXBuildFile; fileRef = B1DDD7B4C4406CBC0430D22F /* claude.png */; };
+		9C7B5EF014AEE216E947743E /* QuotaBarWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = EECA164BE26763DF366DCB84 /* QuotaBarWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A1541F2132EE05899A439D59 /* CursorConnector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 918C38B2D58C54CDBDF57EAE /* CursorConnector.swift */; };
+		ACA07DAF8643B4860FC1C826 /* googleAI.png in Resources */ = {isa = PBXBuildFile; fileRef = FFDCB252FD9CD433980FAE80 /* googleAI.png */; };
+		BAD2B7CF6D630343A16FB874 /* WidgetShared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B823DFA477D4FA6885A763D /* WidgetShared.swift */; };
+		C3034EE6067FB3E53C3BE77F /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3408E2ADF211F8F20162DD27 /* MenuBarView.swift */; };
+		C7411307BF65C4BBBC83F2F6 /* chatgpt.png in Resources */ = {isa = PBXBuildFile; fileRef = 4906D649CBCA461B02E09321 /* chatgpt.png */; };
+		CAF747DCCB6E460FBC397D6A /* nvidiaNIM.png in Resources */ = {isa = PBXBuildFile; fileRef = 7F19480BF3D5D651296B5576 /* nvidiaNIM.png */; };
+		CB65D948F9EF4D76E3EB85DD /* chatgpt.png in Resources */ = {isa = PBXBuildFile; fileRef = 4906D649CBCA461B02E09321 /* chatgpt.png */; };
+		D58017CD27E71B960DD7AC35 /* QuotaRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1975FC6DFB445C4B8A9F8641 /* QuotaRow.swift */; };
+		DBF5FB5595D84DC0A842B48D /* AppStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58E0ABCA12D8E74C0A5B9CAE /* AppStore.swift */; };
+		DF2DDEC29C33F02495304080 /* ClaudeConnector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C14B5E6C3E2F341B7F9512A /* ClaudeConnector.swift */; };
+		DFB424D21225004675BFE247 /* WidgetSnapshotWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9D3A98DBA19B25AFBC59C94 /* WidgetSnapshotWriter.swift */; };
+		E98C389E828385D148D68F5B /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22DAB45722F2B3140B0D7ADB /* DashboardView.swift */; };
+		F188970A2E1737F894BB0D3F /* googleAI.png in Resources */ = {isa = PBXBuildFile; fileRef = FFDCB252FD9CD433980FAE80 /* googleAI.png */; };
+		F57936890138C19F65D8875E /* copilot.png in Resources */ = {isa = PBXBuildFile; fileRef = 89AE65BE87B4D74A5C57449A /* copilot.png */; };
+		FD693672CDA41B8D4F94E017 /* ChatGPTConnector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31DE466082A765297BE7BE8C /* ChatGPTConnector.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		D26AB00D236F8288796C9D47 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A3C68224B67F079DDA7707DD /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E6C16D537C5AAE7AEF26C31B;
+			remoteInfo = QuotaBarWidget;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		C6508E7FEF5B7DF90F9788C7 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				9C7B5EF014AEE216E947743E /* QuotaBarWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		053BAB2C09DA98D829CE16B3 /* AppSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppSettingsView.swift; sourceTree = "<group>"; };
+		1455E2FF2155971FC91E615B /* WidgetRefreshListener.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetRefreshListener.swift; sourceTree = "<group>"; };
+		15E7A9851FE2929B25A439C5 /* AppIcon.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; path = AppIcon.icns; sourceTree = "<group>"; };
+		1916D12EE205C72DB2DBE0C1 /* LocalActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalActivity.swift; sourceTree = "<group>"; };
+		1975FC6DFB445C4B8A9F8641 /* QuotaRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuotaRow.swift; sourceTree = "<group>"; };
+		22DAB45722F2B3140B0D7ADB /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		253E68C2300C77071FAAC217 /* StatusExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusExporter.swift; sourceTree = "<group>"; };
+		26B4B9DA0B047557AD29856C /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
+		2B823DFA477D4FA6885A763D /* WidgetShared.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetShared.swift; sourceTree = "<group>"; };
+		31DE466082A765297BE7BE8C /* ChatGPTConnector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatGPTConnector.swift; sourceTree = "<group>"; };
+		3408E2ADF211F8F20162DD27 /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
+		340D75FE53988F42B67F78C3 /* QuotaBar.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = QuotaBar.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		3C14B5E6C3E2F341B7F9512A /* ClaudeConnector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeConnector.swift; sourceTree = "<group>"; };
+		4906D649CBCA461B02E09321 /* chatgpt.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = chatgpt.png; sourceTree = "<group>"; };
+		58E0ABCA12D8E74C0A5B9CAE /* AppStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStore.swift; sourceTree = "<group>"; };
+		5ECC63E1130EBCFD5EBB7661 /* AddAccountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddAccountView.swift; sourceTree = "<group>"; };
+		6783DAF996C1688F92AA5FAF /* cursor.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = cursor.png; sourceTree = "<group>"; };
+		7090AE9D7962BE39B5675FF5 /* AccountSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountSettingsView.swift; sourceTree = "<group>"; };
+		7F19480BF3D5D651296B5576 /* nvidiaNIM.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = nvidiaNIM.png; sourceTree = "<group>"; };
+		89AE65BE87B4D74A5C57449A /* copilot.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = copilot.png; sourceTree = "<group>"; };
+		918C38B2D58C54CDBDF57EAE /* CursorConnector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CursorConnector.swift; sourceTree = "<group>"; };
+		9ACF47697DBEFBABE027B4E9 /* DefaultQuotas.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultQuotas.swift; sourceTree = "<group>"; };
+		AFFB2D0EB4D7AED5F1E4891A /* GeminiConnector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeminiConnector.swift; sourceTree = "<group>"; };
+		B0D459BBCA29774A24E95105 /* Connector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Connector.swift; sourceTree = "<group>"; };
+		B1DDD7B4C4406CBC0430D22F /* claude.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = claude.png; sourceTree = "<group>"; };
+		C7881CF5EB5B97E6C4CBFEA5 /* CopilotConnector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CopilotConnector.swift; sourceTree = "<group>"; };
+		C855E79A85C6C4DAD60797F2 /* AntigravityConnector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AntigravityConnector.swift; sourceTree = "<group>"; };
+		C9E51D21195C85AD15ECD3CC /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		CB84C086A950F5214F7F5307 /* QuotaBarApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuotaBarApp.swift; sourceTree = "<group>"; };
+		EECA164BE26763DF366DCB84 /* QuotaBarWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = QuotaBarWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		F6E126D5EF51C308D698DFA7 /* antigravity.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = antigravity.png; sourceTree = "<group>"; };
+		F8C315E9EFF8D7D3886C2DC4 /* Keychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keychain.swift; sourceTree = "<group>"; };
+		F9D3A98DBA19B25AFBC59C94 /* WidgetSnapshotWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetSnapshotWriter.swift; sourceTree = "<group>"; };
+		FFDCB252FD9CD433980FAE80 /* googleAI.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = googleAI.png; sourceTree = "<group>"; };
+		FFDF2EEB090720E48D66EB4F /* QuotaBarWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuotaBarWidget.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		411F285A7CCA501E39F48515 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				B18777C68E9E3D6F25D60FD4 /* Logos */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		6896D2A36B449CFF827CAF5A /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				58E0ABCA12D8E74C0A5B9CAE /* AppStore.swift */,
+				9ACF47697DBEFBABE027B4E9 /* DefaultQuotas.swift */,
+				C9E51D21195C85AD15ECD3CC /* Models.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		86EEC0ABD1A556BC49FD78F7 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				340D75FE53988F42B67F78C3 /* QuotaBar.app */,
+				EECA164BE26763DF366DCB84 /* QuotaBarWidget.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		8FAB3CAAB6881FD2FA7F0FC2 /* Connectors */ = {
+			isa = PBXGroup;
+			children = (
+				C855E79A85C6C4DAD60797F2 /* AntigravityConnector.swift */,
+				31DE466082A765297BE7BE8C /* ChatGPTConnector.swift */,
+				3C14B5E6C3E2F341B7F9512A /* ClaudeConnector.swift */,
+				B0D459BBCA29774A24E95105 /* Connector.swift */,
+				C7881CF5EB5B97E6C4CBFEA5 /* CopilotConnector.swift */,
+				918C38B2D58C54CDBDF57EAE /* CursorConnector.swift */,
+				AFFB2D0EB4D7AED5F1E4891A /* GeminiConnector.swift */,
+				1916D12EE205C72DB2DBE0C1 /* LocalActivity.swift */,
+			);
+			path = Connectors;
+			sourceTree = "<group>";
+		};
+		95733517431B0CA7FA4CE165 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				15E7A9851FE2929B25A439C5 /* AppIcon.icns */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		9DE57895E5874A0BFB19956B /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				FBD4E7740B0235589DFD664D /* QuotaBar */,
+				AB43D03B57DEF1C2F821D95E /* QuotaBarWidget */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		9DFE3A5EDD8BD856A58F2669 = {
+			isa = PBXGroup;
+			children = (
+				95733517431B0CA7FA4CE165 /* Resources */,
+				9DE57895E5874A0BFB19956B /* Sources */,
+				86EEC0ABD1A556BC49FD78F7 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		AB43D03B57DEF1C2F821D95E /* QuotaBarWidget */ = {
+			isa = PBXGroup;
+			children = (
+				FFDF2EEB090720E48D66EB4F /* QuotaBarWidget.swift */,
+			);
+			path = QuotaBarWidget;
+			sourceTree = "<group>";
+		};
+		AC2CCDAA71F576FE0D208A2E /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				7090AE9D7962BE39B5675FF5 /* AccountSettingsView.swift */,
+				5ECC63E1130EBCFD5EBB7661 /* AddAccountView.swift */,
+				053BAB2C09DA98D829CE16B3 /* AppSettingsView.swift */,
+				26B4B9DA0B047557AD29856C /* Components.swift */,
+				22DAB45722F2B3140B0D7ADB /* DashboardView.swift */,
+				3408E2ADF211F8F20162DD27 /* MenuBarView.swift */,
+				1975FC6DFB445C4B8A9F8641 /* QuotaRow.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		B18777C68E9E3D6F25D60FD4 /* Logos */ = {
+			isa = PBXGroup;
+			children = (
+				F6E126D5EF51C308D698DFA7 /* antigravity.png */,
+				4906D649CBCA461B02E09321 /* chatgpt.png */,
+				B1DDD7B4C4406CBC0430D22F /* claude.png */,
+				89AE65BE87B4D74A5C57449A /* copilot.png */,
+				6783DAF996C1688F92AA5FAF /* cursor.png */,
+				FFDCB252FD9CD433980FAE80 /* googleAI.png */,
+				7F19480BF3D5D651296B5576 /* nvidiaNIM.png */,
+			);
+			path = Logos;
+			sourceTree = "<group>";
+		};
+		CF950AE792F1090E479D2FF2 /* Util */ = {
+			isa = PBXGroup;
+			children = (
+				F8C315E9EFF8D7D3886C2DC4 /* Keychain.swift */,
+				253E68C2300C77071FAAC217 /* StatusExporter.swift */,
+				1455E2FF2155971FC91E615B /* WidgetRefreshListener.swift */,
+				2B823DFA477D4FA6885A763D /* WidgetShared.swift */,
+				F9D3A98DBA19B25AFBC59C94 /* WidgetSnapshotWriter.swift */,
+			);
+			path = Util;
+			sourceTree = "<group>";
+		};
+		FBD4E7740B0235589DFD664D /* QuotaBar */ = {
+			isa = PBXGroup;
+			children = (
+				CB84C086A950F5214F7F5307 /* QuotaBarApp.swift */,
+				8FAB3CAAB6881FD2FA7F0FC2 /* Connectors */,
+				6896D2A36B449CFF827CAF5A /* Models */,
+				411F285A7CCA501E39F48515 /* Resources */,
+				CF950AE792F1090E479D2FF2 /* Util */,
+				AC2CCDAA71F576FE0D208A2E /* Views */,
+			);
+			path = QuotaBar;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		64EEF90BB697FB3F1F8941B1 /* QuotaBar */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 51522FC2F7E1BA7C059510A2 /* Build configuration list for PBXNativeTarget "QuotaBar" */;
+			buildPhases = (
+				C301063859D260F7D2CF12F1 /* Sources */,
+				ABE9E2866FCE50FB15F87547 /* Resources */,
+				C6508E7FEF5B7DF90F9788C7 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				D98CD860576B9889C877AFF9 /* PBXTargetDependency */,
+			);
+			name = QuotaBar;
+			packageProductDependencies = (
+			);
+			productName = QuotaBar;
+			productReference = 340D75FE53988F42B67F78C3 /* QuotaBar.app */;
+			productType = "com.apple.product-type.application";
+		};
+		E6C16D537C5AAE7AEF26C31B /* QuotaBarWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CAF4737B2998258BDC5E79D0 /* Build configuration list for PBXNativeTarget "QuotaBarWidget" */;
+			buildPhases = (
+				495BF3606C56B5C040E191E9 /* Sources */,
+				C9E9C9939784E794911EFC2D /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = QuotaBarWidget;
+			packageProductDependencies = (
+			);
+			productName = QuotaBarWidget;
+			productReference = EECA164BE26763DF366DCB84 /* QuotaBarWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A3C68224B67F079DDA7707DD /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					64EEF90BB697FB3F1F8941B1 = {
+						ProvisioningStyle = Automatic;
+					};
+					E6C16D537C5AAE7AEF26C31B = {
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 39115C3B940A5770CAE403C4 /* Build configuration list for PBXProject "QuotaBar" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 9DFE3A5EDD8BD856A58F2669;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 86EEC0ABD1A556BC49FD78F7 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				64EEF90BB697FB3F1F8941B1 /* QuotaBar */,
+				E6C16D537C5AAE7AEF26C31B /* QuotaBarWidget */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		ABE9E2866FCE50FB15F87547 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				255EC7F1EE2D8DADBB321574 /* AppIcon.icns in Resources */,
+				0F17BE2F51FB30F9F5C405E9 /* antigravity.png in Resources */,
+				CB65D948F9EF4D76E3EB85DD /* chatgpt.png in Resources */,
+				7B52245989B50EF787A87414 /* claude.png in Resources */,
+				F57936890138C19F65D8875E /* copilot.png in Resources */,
+				05EC9305731F721589317E0A /* cursor.png in Resources */,
+				F188970A2E1737F894BB0D3F /* googleAI.png in Resources */,
+				7999462226EC3651202CA01D /* nvidiaNIM.png in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C9E9C9939784E794911EFC2D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				56AFB03011A2FA4A2D372E2F /* antigravity.png in Resources */,
+				C7411307BF65C4BBBC83F2F6 /* chatgpt.png in Resources */,
+				917A85A349B96447AE6C1837 /* claude.png in Resources */,
+				46810E48F58B0EC76FCEF714 /* copilot.png in Resources */,
+				11179BA32BFA5F16E4227614 /* cursor.png in Resources */,
+				ACA07DAF8643B4860FC1C826 /* googleAI.png in Resources */,
+				CAF747DCCB6E460FBC397D6A /* nvidiaNIM.png in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		495BF3606C56B5C040E191E9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				458C3CDB1FCE40229574321C /* QuotaBarWidget.swift in Sources */,
+				0189F65D3E2659C4F5D57F01 /* WidgetShared.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C301063859D260F7D2CF12F1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3D5D775482F77E906239BFD6 /* AccountSettingsView.swift in Sources */,
+				113034FA33FED444FBCA4B9C /* AddAccountView.swift in Sources */,
+				56329A4B56DEAE7C1BFEC4BE /* AntigravityConnector.swift in Sources */,
+				81F51CC9C00F3F83B80DDAC6 /* AppSettingsView.swift in Sources */,
+				DBF5FB5595D84DC0A842B48D /* AppStore.swift in Sources */,
+				FD693672CDA41B8D4F94E017 /* ChatGPTConnector.swift in Sources */,
+				DF2DDEC29C33F02495304080 /* ClaudeConnector.swift in Sources */,
+				00E560A206CF2E5C78110925 /* Components.swift in Sources */,
+				888CD8A358BDC34368F76FBE /* Connector.swift in Sources */,
+				6D3D3C25477CEC2AF1F33B67 /* CopilotConnector.swift in Sources */,
+				A1541F2132EE05899A439D59 /* CursorConnector.swift in Sources */,
+				E98C389E828385D148D68F5B /* DashboardView.swift in Sources */,
+				63EB6DA6DA2A1B11B055FCD8 /* DefaultQuotas.swift in Sources */,
+				67FE85D3082041C51E939967 /* GeminiConnector.swift in Sources */,
+				1DB9A990A1719542D2210096 /* Keychain.swift in Sources */,
+				10C8E4322D93F36C88C710D5 /* LocalActivity.swift in Sources */,
+				C3034EE6067FB3E53C3BE77F /* MenuBarView.swift in Sources */,
+				66B3FA7FDAD91A11FADFE17C /* Models.swift in Sources */,
+				1BEE90065A825EFA6A54D299 /* QuotaBarApp.swift in Sources */,
+				D58017CD27E71B960DD7AC35 /* QuotaRow.swift in Sources */,
+				2047C1969D48694869845C6C /* StatusExporter.swift in Sources */,
+				194F4577629AE522435B0C15 /* WidgetRefreshListener.swift in Sources */,
+				BAD2B7CF6D630343A16FB874 /* WidgetShared.swift in Sources */,
+				DFB424D21225004675BFE247 /* WidgetSnapshotWriter.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		D98CD860576B9889C877AFF9 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E6C16D537C5AAE7AEF26C31B /* QuotaBarWidget */;
+			targetProxy = D26AB00D236F8288796C9D47 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		06EC4FF30352D4C4F48B4D16 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Config/QuotaBarWidget.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = 2S9H42VJUA;
+				INFOPLIST_FILE = "Config/QuotaBarWidget-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.wevoid.quotabar.widget;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		14A459CEFDF1042436D15F72 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Config/QuotaBar.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = 2S9H42VJUA;
+				INFOPLIST_FILE = "Config/QuotaBarApp-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.wevoid.quotabar;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		7C529A6241535FE890111B26 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Config/QuotaBar.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = 2S9H42VJUA;
+				INFOPLIST_FILE = "Config/QuotaBarApp-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.wevoid.quotabar;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		B04275F5DE23413314B7207E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Config/QuotaBarWidget.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = 2S9H42VJUA;
+				INFOPLIST_FILE = "Config/QuotaBarWidget-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.wevoid.quotabar.widget;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+			};
+			name = Release;
+		};
+		CB155796C2A7126191568FBC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Release;
+		};
+		FC7C01A7DCB9B995F9C3A0D3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.9;
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		39115C3B940A5770CAE403C4 /* Build configuration list for PBXProject "QuotaBar" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FC7C01A7DCB9B995F9C3A0D3 /* Debug */,
+				CB155796C2A7126191568FBC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		51522FC2F7E1BA7C059510A2 /* Build configuration list for PBXNativeTarget "QuotaBar" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7C529A6241535FE890111B26 /* Debug */,
+				14A459CEFDF1042436D15F72 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		CAF4737B2998258BDC5E79D0 /* Build configuration list for PBXNativeTarget "QuotaBarWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				06EC4FF30352D4C4F48B4D16 /* Debug */,
+				B04275F5DE23413314B7207E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A3C68224B67F079DDA7707DD /* Project object */;
+}

@@ -1,0 +1,93 @@
+# XcodeGen 설정 — 위젯 익스텐션은 SPM으로 빌드할 수 없어 Xcode 프로젝트가 필요하다.
+# 사용법:
+#   brew install xcodegen   # 없으면
+#   xcodegen generate
+#   open QuotaBar.xcodeproj # Signing & Capabilities에서 Team 선택 후 Run
+name: QuotaBar
+options:
+  bundleIdPrefix: com.wevoid
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    CODE_SIGN_STYLE: Automatic
+    # Developer ID 직접 배포(공증)에 필요
+    ENABLE_HARDENED_RUNTIME: YES
+
+targets:
+  QuotaBar:
+    type: application
+    platform: macOS
+    sources:
+      - path: Sources/QuotaBar
+      - path: Resources/AppIcon.icns
+        buildPhase: resources
+    info:
+      path: Config/QuotaBarApp-Info.plist
+      properties:
+        CFBundleDisplayName: QuotaBar
+        CFBundleShortVersionString: "1.0.6"
+        CFBundleVersion: "7"
+        CFBundleIconFile: AppIcon
+        LSApplicationCategoryType: public.app-category.developer-tools
+        LSMinimumSystemVersion: "14.0"
+        NSHighResolutionCapable: true
+    entitlements:
+      path: Config/QuotaBar.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - $(TeamIdentifierPrefix)com.wevoid.quotabar
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.wevoid.quotabar
+    dependencies:
+      - target: QuotaBarWidget
+        embed: true
+
+  QuotaBarWidget:
+    type: app-extension
+    platform: macOS
+    sources:
+      - path: Sources/QuotaBarWidget
+      # 앱과 공유하는 스냅샷 모델
+      - path: Sources/QuotaBar/Util/WidgetShared.swift
+      # 서비스 로고 PNG (위젯 배지용)
+      - path: Sources/QuotaBar/Resources/Logos
+        buildPhase: resources
+    info:
+      path: Config/QuotaBarWidget-Info.plist
+      properties:
+        CFBundleDisplayName: QuotaBar 위젯
+        CFBundleShortVersionString: "1.0.6"
+        CFBundleVersion: "7"
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    entitlements:
+      path: Config/QuotaBarWidget.entitlements
+      properties:
+        # macOS 위젯 익스텐션은 샌드박스 필수
+        com.apple.security.app-sandbox: true
+        com.apple.security.application-groups:
+          - $(TeamIdentifierPrefix)com.wevoid.quotabar
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.wevoid.quotabar.widget
+        SKIP_INSTALL: true
+
+schemes:
+  QuotaBar:
+    build:
+      targets:
+        QuotaBar: all
+        QuotaBarWidget: all
+    run:
+      config: Debug
+      executable: QuotaBar
+
+  QuotaBarWidget:
+    build:
+      targets:
+        QuotaBarWidget: all

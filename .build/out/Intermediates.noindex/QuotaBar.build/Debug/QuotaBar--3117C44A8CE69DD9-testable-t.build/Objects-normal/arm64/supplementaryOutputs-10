@@ -1,0 +1,23 @@
+{
+  "/Users/jh/Claude/Projects/ai-quota/Sources/QuotaBar/QuotaBarApp.swift" : {
+    "const-values" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar--3117C44A8CE69DD9-testable-t.build/Objects-normal/arm64/QuotaBarApp.swiftconstvalues",
+    "dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar--3117C44A8CE69DD9-testable-t.build/Objects-normal/arm64/QuotaBarApp.d",
+    "diagnostics" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar--3117C44A8CE69DD9-testable-t.build/Objects-normal/arm64/QuotaBarApp.dia",
+    "object" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar--3117C44A8CE69DD9-testable-t.build/Objects-normal/arm64/QuotaBarApp.o",
+    "swift-dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar--3117C44A8CE69DD9-testable-t.build/Objects-normal/arm64/QuotaBarApp.swiftdeps"
+  },
+  "/Users/jh/Claude/Projects/ai-quota/Sources/QuotaBar/Util/Keychain.swift" : {
+    "const-values" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar--3117C44A8CE69DD9-testable-t.build/Objects-normal/arm64/Keychain.swiftconstvalues",
+    "dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar--3117C44A8CE69DD9-testable-t.build/Objects-normal/arm64/Keychain.d",
+    "diagnostics" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar--3117C44A8CE69DD9-testable-t.build/Objects-normal/arm64/Keychain.dia",
+    "object" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar--3117C44A8CE69DD9-testable-t.build/Objects-normal/arm64/Keychain.o",
+    "swift-dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar--3117C44A8CE69DD9-testable-t.build/Objects-normal/arm64/Keychain.swiftdeps"
+  },
+  "/Users/jh/Claude/Projects/ai-quota/Sources/QuotaBar/Util/StatusExporter.swift" : {
+    "const-values" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar--3117C44A8CE69DD9-testable-t.build/Objects-normal/arm64/StatusExporter.swiftconstvalues",
+    "dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar--3117C44A8CE69DD9-testable-t.build/Objects-normal/arm64/StatusExporter.d",
+    "diagnostics" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar--3117C44A8CE69DD9-testable-t.build/Objects-normal/arm64/StatusExporter.dia",
+    "object" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar--3117C44A8CE69DD9-testable-t.build/Objects-normal/arm64/StatusExporter.o",
+    "swift-dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar--3117C44A8CE69DD9-testable-t.build/Objects-normal/arm64/StatusExporter.swiftdeps"
+  }
+}

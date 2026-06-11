@@ -1,0 +1,259 @@
+{
+  "" : {
+    "diagnostics" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/QuotaBar-primary.dia",
+    "emit-module-dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/QuotaBar-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/QuotaBar-primary-emit-module.dia",
+    "pch" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/QuotaBar-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/QuotaBar-primary.swiftdeps"
+  },
+  "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/DerivedSources/resource_bundle_accessor.swift" : {
+    "const-values" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/resource_bundle_accessor.swiftconstvalues",
+    "dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/resource_bundle_accessor.d",
+    "diagnostics" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/resource_bundle_accessor.dia",
+    "index-unit-output-path" : "/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/resource_bundle_accessor.o",
+    "llvm-bc" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/resource_bundle_accessor.bc",
+    "object" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/resource_bundle_accessor.o",
+    "swift-dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/resource_bundle_accessor.swiftdeps",
+    "swiftmodule" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/resource_bundle_accessor~partial.swiftmodule"
+  },
+  "/Users/jh/Claude/Projects/ai-quota/Sources/QuotaBar/Connectors/AntigravityConnector.swift" : {
+    "const-values" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AntigravityConnector.swiftconstvalues",
+    "dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AntigravityConnector.d",
+    "diagnostics" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AntigravityConnector.dia",
+    "index-unit-output-path" : "/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AntigravityConnector.o",
+    "llvm-bc" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AntigravityConnector.bc",
+    "object" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AntigravityConnector.o",
+    "swift-dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AntigravityConnector.swiftdeps",
+    "swiftmodule" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AntigravityConnector~partial.swiftmodule"
+  },
+  "/Users/jh/Claude/Projects/ai-quota/Sources/QuotaBar/Connectors/ChatGPTConnector.swift" : {
+    "const-values" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/ChatGPTConnector.swiftconstvalues",
+    "dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/ChatGPTConnector.d",
+    "diagnostics" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/ChatGPTConnector.dia",
+    "index-unit-output-path" : "/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/ChatGPTConnector.o",
+    "llvm-bc" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/ChatGPTConnector.bc",
+    "object" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/ChatGPTConnector.o",
+    "swift-dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/ChatGPTConnector.swiftdeps",
+    "swiftmodule" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/ChatGPTConnector~partial.swiftmodule"
+  },
+  "/Users/jh/Claude/Projects/ai-quota/Sources/QuotaBar/Connectors/ClaudeConnector.swift" : {
+    "const-values" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/ClaudeConnector.swiftconstvalues",
+    "dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/ClaudeConnector.d",
+    "diagnostics" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/ClaudeConnector.dia",
+    "index-unit-output-path" : "/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/ClaudeConnector.o",
+    "llvm-bc" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/ClaudeConnector.bc",
+    "object" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/ClaudeConnector.o",
+    "swift-dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/ClaudeConnector.swiftdeps",
+    "swiftmodule" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/ClaudeConnector~partial.swiftmodule"
+  },
+  "/Users/jh/Claude/Projects/ai-quota/Sources/QuotaBar/Connectors/Connector.swift" : {
+    "const-values" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/Connector.swiftconstvalues",
+    "dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/Connector.d",
+    "diagnostics" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/Connector.dia",
+    "index-unit-output-path" : "/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/Connector.o",
+    "llvm-bc" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/Connector.bc",
+    "object" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/Connector.o",
+    "swift-dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/Connector.swiftdeps",
+    "swiftmodule" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/Connector~partial.swiftmodule"
+  },
+  "/Users/jh/Claude/Projects/ai-quota/Sources/QuotaBar/Connectors/CopilotConnector.swift" : {
+    "const-values" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/CopilotConnector.swiftconstvalues",
+    "dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/CopilotConnector.d",
+    "diagnostics" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/CopilotConnector.dia",
+    "index-unit-output-path" : "/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/CopilotConnector.o",
+    "llvm-bc" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/CopilotConnector.bc",
+    "object" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/CopilotConnector.o",
+    "swift-dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/CopilotConnector.swiftdeps",
+    "swiftmodule" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/CopilotConnector~partial.swiftmodule"
+  },
+  "/Users/jh/Claude/Projects/ai-quota/Sources/QuotaBar/Connectors/CursorConnector.swift" : {
+    "const-values" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/CursorConnector.swiftconstvalues",
+    "dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/CursorConnector.d",
+    "diagnostics" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/CursorConnector.dia",
+    "index-unit-output-path" : "/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/CursorConnector.o",
+    "llvm-bc" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/CursorConnector.bc",
+    "object" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/CursorConnector.o",
+    "swift-dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/CursorConnector.swiftdeps",
+    "swiftmodule" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/CursorConnector~partial.swiftmodule"
+  },
+  "/Users/jh/Claude/Projects/ai-quota/Sources/QuotaBar/Connectors/GeminiConnector.swift" : {
+    "const-values" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/GeminiConnector.swiftconstvalues",
+    "dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/GeminiConnector.d",
+    "diagnostics" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/GeminiConnector.dia",
+    "index-unit-output-path" : "/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/GeminiConnector.o",
+    "llvm-bc" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/GeminiConnector.bc",
+    "object" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/GeminiConnector.o",
+    "swift-dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/GeminiConnector.swiftdeps",
+    "swiftmodule" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/GeminiConnector~partial.swiftmodule"
+  },
+  "/Users/jh/Claude/Projects/ai-quota/Sources/QuotaBar/Connectors/LocalActivity.swift" : {
+    "const-values" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/LocalActivity.swiftconstvalues",
+    "dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/LocalActivity.d",
+    "diagnostics" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/LocalActivity.dia",
+    "index-unit-output-path" : "/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/LocalActivity.o",
+    "llvm-bc" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/LocalActivity.bc",
+    "object" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/LocalActivity.o",
+    "swift-dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/LocalActivity.swiftdeps",
+    "swiftmodule" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/LocalActivity~partial.swiftmodule"
+  },
+  "/Users/jh/Claude/Projects/ai-quota/Sources/QuotaBar/Models/AppStore.swift" : {
+    "const-values" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AppStore.swiftconstvalues",
+    "dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AppStore.d",
+    "diagnostics" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AppStore.dia",
+    "index-unit-output-path" : "/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AppStore.o",
+    "llvm-bc" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AppStore.bc",
+    "object" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AppStore.o",
+    "swift-dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AppStore.swiftdeps",
+    "swiftmodule" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AppStore~partial.swiftmodule"
+  },
+  "/Users/jh/Claude/Projects/ai-quota/Sources/QuotaBar/Models/DefaultQuotas.swift" : {
+    "const-values" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/DefaultQuotas.swiftconstvalues",
+    "dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/DefaultQuotas.d",
+    "diagnostics" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/DefaultQuotas.dia",
+    "index-unit-output-path" : "/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/DefaultQuotas.o",
+    "llvm-bc" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/DefaultQuotas.bc",
+    "object" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/DefaultQuotas.o",
+    "swift-dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/DefaultQuotas.swiftdeps",
+    "swiftmodule" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/DefaultQuotas~partial.swiftmodule"
+  },
+  "/Users/jh/Claude/Projects/ai-quota/Sources/QuotaBar/Models/Models.swift" : {
+    "const-values" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/Models.swiftconstvalues",
+    "dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/Models.d",
+    "diagnostics" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/Models.dia",
+    "index-unit-output-path" : "/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/Models.o",
+    "llvm-bc" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/Models.bc",
+    "object" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/Models.o",
+    "swift-dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/Models.swiftdeps",
+    "swiftmodule" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/Models~partial.swiftmodule"
+  },
+  "/Users/jh/Claude/Projects/ai-quota/Sources/QuotaBar/QuotaBarApp.swift" : {
+    "const-values" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/QuotaBarApp.swiftconstvalues",
+    "dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/QuotaBarApp.d",
+    "diagnostics" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/QuotaBarApp.dia",
+    "index-unit-output-path" : "/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/QuotaBarApp.o",
+    "llvm-bc" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/QuotaBarApp.bc",
+    "object" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/QuotaBarApp.o",
+    "swift-dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/QuotaBarApp.swiftdeps",
+    "swiftmodule" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/QuotaBarApp~partial.swiftmodule"
+  },
+  "/Users/jh/Claude/Projects/ai-quota/Sources/QuotaBar/Util/Keychain.swift" : {
+    "const-values" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/Keychain.swiftconstvalues",
+    "dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/Keychain.d",
+    "diagnostics" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/Keychain.dia",
+    "index-unit-output-path" : "/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/Keychain.o",
+    "llvm-bc" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/Keychain.bc",
+    "object" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/Keychain.o",
+    "swift-dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/Keychain.swiftdeps",
+    "swiftmodule" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/Keychain~partial.swiftmodule"
+  },
+  "/Users/jh/Claude/Projects/ai-quota/Sources/QuotaBar/Util/StatusExporter.swift" : {
+    "const-values" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/StatusExporter.swiftconstvalues",
+    "dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/StatusExporter.d",
+    "diagnostics" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/StatusExporter.dia",
+    "index-unit-output-path" : "/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/StatusExporter.o",
+    "llvm-bc" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/StatusExporter.bc",
+    "object" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/StatusExporter.o",
+    "swift-dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/StatusExporter.swiftdeps",
+    "swiftmodule" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/StatusExporter~partial.swiftmodule"
+  },
+  "/Users/jh/Claude/Projects/ai-quota/Sources/QuotaBar/Util/WidgetRefreshListener.swift" : {
+    "const-values" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/WidgetRefreshListener.swiftconstvalues",
+    "dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/WidgetRefreshListener.d",
+    "diagnostics" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/WidgetRefreshListener.dia",
+    "index-unit-output-path" : "/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/WidgetRefreshListener.o",
+    "llvm-bc" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/WidgetRefreshListener.bc",
+    "object" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/WidgetRefreshListener.o",
+    "swift-dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/WidgetRefreshListener.swiftdeps",
+    "swiftmodule" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/WidgetRefreshListener~partial.swiftmodule"
+  },
+  "/Users/jh/Claude/Projects/ai-quota/Sources/QuotaBar/Util/WidgetShared.swift" : {
+    "const-values" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/WidgetShared.swiftconstvalues",
+    "dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/WidgetShared.d",
+    "diagnostics" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/WidgetShared.dia",
+    "index-unit-output-path" : "/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/WidgetShared.o",
+    "llvm-bc" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/WidgetShared.bc",
+    "object" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/WidgetShared.o",
+    "swift-dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/WidgetShared.swiftdeps",
+    "swiftmodule" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/WidgetShared~partial.swiftmodule"
+  },
+  "/Users/jh/Claude/Projects/ai-quota/Sources/QuotaBar/Util/WidgetSnapshotWriter.swift" : {
+    "const-values" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/WidgetSnapshotWriter.swiftconstvalues",
+    "dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/WidgetSnapshotWriter.d",
+    "diagnostics" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/WidgetSnapshotWriter.dia",
+    "index-unit-output-path" : "/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/WidgetSnapshotWriter.o",
+    "llvm-bc" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/WidgetSnapshotWriter.bc",
+    "object" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/WidgetSnapshotWriter.o",
+    "swift-dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/WidgetSnapshotWriter.swiftdeps",
+    "swiftmodule" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/WidgetSnapshotWriter~partial.swiftmodule"
+  },
+  "/Users/jh/Claude/Projects/ai-quota/Sources/QuotaBar/Views/AccountSettingsView.swift" : {
+    "const-values" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AccountSettingsView.swiftconstvalues",
+    "dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AccountSettingsView.d",
+    "diagnostics" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AccountSettingsView.dia",
+    "index-unit-output-path" : "/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AccountSettingsView.o",
+    "llvm-bc" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AccountSettingsView.bc",
+    "object" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AccountSettingsView.o",
+    "swift-dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AccountSettingsView.swiftdeps",
+    "swiftmodule" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AccountSettingsView~partial.swiftmodule"
+  },
+  "/Users/jh/Claude/Projects/ai-quota/Sources/QuotaBar/Views/AddAccountView.swift" : {
+    "const-values" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AddAccountView.swiftconstvalues",
+    "dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AddAccountView.d",
+    "diagnostics" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AddAccountView.dia",
+    "index-unit-output-path" : "/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AddAccountView.o",
+    "llvm-bc" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AddAccountView.bc",
+    "object" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AddAccountView.o",
+    "swift-dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AddAccountView.swiftdeps",
+    "swiftmodule" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AddAccountView~partial.swiftmodule"
+  },
+  "/Users/jh/Claude/Projects/ai-quota/Sources/QuotaBar/Views/AppSettingsView.swift" : {
+    "const-values" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AppSettingsView.swiftconstvalues",
+    "dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AppSettingsView.d",
+    "diagnostics" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AppSettingsView.dia",
+    "index-unit-output-path" : "/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AppSettingsView.o",
+    "llvm-bc" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AppSettingsView.bc",
+    "object" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AppSettingsView.o",
+    "swift-dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AppSettingsView.swiftdeps",
+    "swiftmodule" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AppSettingsView~partial.swiftmodule"
+  },
+  "/Users/jh/Claude/Projects/ai-quota/Sources/QuotaBar/Views/Components.swift" : {
+    "const-values" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/Components.swiftconstvalues",
+    "dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/Components.d",
+    "diagnostics" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/Components.dia",
+    "index-unit-output-path" : "/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/Components.o",
+    "llvm-bc" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/Components.bc",
+    "object" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/Components.o",
+    "swift-dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/Components.swiftdeps",
+    "swiftmodule" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/Components~partial.swiftmodule"
+  },
+  "/Users/jh/Claude/Projects/ai-quota/Sources/QuotaBar/Views/DashboardView.swift" : {
+    "const-values" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/DashboardView.swiftconstvalues",
+    "dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/DashboardView.d",
+    "diagnostics" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/DashboardView.dia",
+    "index-unit-output-path" : "/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/DashboardView.o",
+    "llvm-bc" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/DashboardView.bc",
+    "object" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/DashboardView.o",
+    "swift-dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/DashboardView.swiftdeps",
+    "swiftmodule" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/DashboardView~partial.swiftmodule"
+  },
+  "/Users/jh/Claude/Projects/ai-quota/Sources/QuotaBar/Views/MenuBarView.swift" : {
+    "const-values" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/MenuBarView.swiftconstvalues",
+    "dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/MenuBarView.d",
+    "diagnostics" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/MenuBarView.dia",
+    "index-unit-output-path" : "/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/MenuBarView.o",
+    "llvm-bc" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/MenuBarView.bc",
+    "object" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/MenuBarView.o",
+    "swift-dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/MenuBarView.swiftdeps",
+    "swiftmodule" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/MenuBarView~partial.swiftmodule"
+  },
+  "/Users/jh/Claude/Projects/ai-quota/Sources/QuotaBar/Views/QuotaRow.swift" : {
+    "const-values" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/QuotaRow.swiftconstvalues",
+    "dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/QuotaRow.d",
+    "diagnostics" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/QuotaRow.dia",
+    "index-unit-output-path" : "/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/QuotaRow.o",
+    "llvm-bc" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/QuotaRow.bc",
+    "object" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/QuotaRow.o",
+    "swift-dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/QuotaRow.swiftdeps",
+    "swiftmodule" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/QuotaRow~partial.swiftmodule"
+  }
+}

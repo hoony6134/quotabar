@@ -1,0 +1,4 @@
+module QuotaBar {
+header "QuotaBar-Swift.h"
+export *
+}

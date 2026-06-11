@@ -1,0 +1,10 @@
+Target dependency graph (4 targets)
+Target 'AllExcludingTests' in project 'Aggregate'
+➜ Explicit dependency on target 'QuotaBar-product' in project 'QuotaBar'
+➜ Explicit dependency on target 'QuotaBar_QuotaBar' in project 'QuotaBar'
+➜ Explicit dependency on target 'QuotaBar' in project 'QuotaBar'
+Target 'QuotaBar' in project 'QuotaBar'
+➜ Explicit dependency on target 'QuotaBar_QuotaBar' in project 'QuotaBar'
+Target 'QuotaBar-product' in project 'QuotaBar'
+➜ Explicit dependency on target 'QuotaBar_QuotaBar' in project 'QuotaBar'
+Target 'QuotaBar_QuotaBar' in project 'QuotaBar' (no dependencies)

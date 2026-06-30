@@ -74,7 +74,7 @@ private extension WidgetQuotaItem {
 
 /// 위젯의 새로고침 버튼: 분산 알림으로 QuotaBar 앱에 갱신을 요청한다.
 struct RefreshQuotasIntent: AppIntent {
-    static var title: LocalizedStringResource = "AI 쿼터 새로고침"
+    static var title: LocalizedStringResource = "QuotaBar 새로고침"
     static var description = IntentDescription("QuotaBar 앱에 사용량 갱신을 요청합니다.")
     static var openAppWhenRun: Bool = true
 
@@ -129,7 +129,7 @@ struct QuotaItemQuery: EntityQuery {
 
 /// 위젯 우클릭 → "위젯 편집"에서 표시할 쿼터를 고른다.
 struct QuotaWidgetConfigIntent: WidgetConfigurationIntent {
-    static var title: LocalizedStringResource = "AI 쿼터 설정"
+    static var title: LocalizedStringResource = "QuotaBar 설정"
     static var description = IntentDescription("위젯에 표시할 쿼터를 선택합니다. 비워두면 사용률 높은 순으로 전체를 표시합니다.")
 
     @Parameter(title: "표시할 쿼터")
@@ -195,7 +195,7 @@ struct QuotaBarWidget: Widget {
             QuotaWidgetView(entry: entry)
                 .containerBackground(.background, for: .widget)
         }
-        .configurationDisplayName("AI 쿼터")
+        .configurationDisplayName("QuotaBar")
         .description("QuotaBar의 AI 구독 사용률을 표시합니다. 위젯 편집에서 표시할 쿼터를 고를 수 있습니다.")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
@@ -384,7 +384,7 @@ private struct ListView: View {
             HStack(spacing: 6) {
                 Image(systemName: "gauge.with.dots.needle.50percent")
                     .font(.caption)
-                Text("AI 쿼터")
+                Text("QuotaBar")
                     .font(.caption.bold())
                 Spacer()
                 if showsRefresh {

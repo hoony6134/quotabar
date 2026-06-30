@@ -81,16 +81,11 @@ struct MenuBarView: View {
             Divider()
 
             HStack {
-                Button("대시보드 열기") {
-                    openWindow(id: "dashboard")
-                    NSApp.activate(ignoringOtherApps: true)
-                }
+                Button("대시보드 열기") { openDashboard() }
                 .quotaGlassButton(prominent: true)
                 .controlSize(.small)
                 Spacer()
-                SettingsLink {
-                    Text("설정")
-                }
+                Button("설정") { openSettings() }
                 .quotaGlassButton()
                 .controlSize(.small)
                 Button("종료") {
@@ -104,6 +99,35 @@ struct MenuBarView: View {
             .padding(.vertical, 10)
         }
         .frame(width: 360, height: 560)
+    }
+
+    /// 대시보드 창을 확실히 앞으로 가져온다.
+    /// MenuBarExtra(.window) 팝오버에서 openWindow만 호출하면 창이 뒤에 열리거나
+    /// 포커스를 못 받는 경우가 있어, 앱 활성화 + 창 makeKeyAndOrderFront를 함께 처리한다.
+    private func openDashboard() {
+        openWindow(id: "dashboard")
+        NSApp.activate(ignoringOtherApps: true)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
+            if let win = NSApp.windows.first(where: {
+                ($0.identifier?.rawValue ?? "").contains("dashboard")
+            }) {
+                win.makeKeyAndOrderFront(nil)
+                win.orderFrontRegardless()
+            }
+            NSApp.activate(ignoringOtherApps: true)
+        }
+    }
+
+    /// 설정 창 열기. SettingsLink는 메뉴막대 앱에서 첫 클릭에 안 열리는 경우가 잦아
+    /// 앱 활성화 후 Settings 씬을 직접 호출한다(macOS 14+).
+    private func openSettings() {
+        NSApp.activate(ignoringOtherApps: true)
+        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
+            NSApp.activate(ignoringOtherApps: true)
+            NSApp.windows.first(where: { $0.title.contains("설정") || $0.title.localizedCaseInsensitiveContains("settings") })?
+                .makeKeyAndOrderFront(nil)
+        }
     }
 
     private var selectedQuotaSummary: some View {

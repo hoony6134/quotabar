@@ -25,6 +25,9 @@ final class AppStore: ObservableObject {
     @AppStorage("obsidianExportPath") var obsidianExportPath: String = "" {
         didSet { save() }
     }
+    @AppStorage("enableResetNotifications") var enableResetNotifications: Bool = false {
+        didSet { handleNotificationToggle() }
+    }
 
     private var timer: Timer?
     private var loading = false
@@ -185,6 +188,47 @@ final class AppStore: ObservableObject {
     func removeQuota(accountID: UUID, key: String) {
         guard let ai = accounts.firstIndex(where: { $0.id == accountID }) else { return }
         accounts[ai].quotas.removeAll { $0.def.key == key }
+    }
+
+    // MARK: - 순서 변경 (대시보드·메뉴바·위젯 공통)
+    // 모든 순서는 `accounts` / `quotas` 배열 순서 하나로 통일된다. 여기서 바꾸면
+    // accounts didSet → save() 로 영속화되고, 메뉴바·위젯 스냅샷도 같은 순서를 따른다.
+
+    /// accounts에 처음 등장한 순서대로의 서비스 목록(대시보드 섹션 순서).
+    var orderedServices: [ServiceKind] {
+        var seen: [ServiceKind] = []
+        for account in accounts where !seen.contains(account.service) {
+            seen.append(account.service)
+        }
+        return seen
+    }
+
+    /// 서비스 섹션 전체를 위/아래로 이동(같은 서비스 계정들은 묶여서 함께 이동).
+    func moveService(_ service: ServiceKind, up: Bool) {
+        var services = orderedServices
+        guard let idx = services.firstIndex(of: service) else { return }
+        let target = up ? idx - 1 : idx + 1
+        guard services.indices.contains(target) else { return }
+        services.swapAt(idx, target)
+        accounts = services.flatMap { svc in accounts.filter { $0.service == svc } }
+    }
+
+    /// 같은 서비스 안에서 계정 순서를 위/아래로 이동.
+    func moveAccountWithinService(id: UUID, up: Bool) {
+        guard let idx = accounts.firstIndex(where: { $0.id == id }) else { return }
+        let target = up ? idx - 1 : idx + 1
+        guard accounts.indices.contains(target),
+              accounts[target].service == accounts[idx].service else { return }
+        accounts.swapAt(idx, target)
+    }
+
+    /// 계정 안에서 쿼터 행 순서를 위/아래로 이동.
+    func moveQuota(accountID: UUID, key: String, up: Bool) {
+        guard let ai = accounts.firstIndex(where: { $0.id == accountID }),
+              let qi = accounts[ai].quotas.firstIndex(where: { $0.def.key == key }) else { return }
+        let target = up ? qi - 1 : qi + 1
+        guard accounts[ai].quotas.indices.contains(target) else { return }
+        accounts[ai].quotas.swapAt(qi, target)
     }
 
     // MARK: - 레거시 로컬 상태
@@ -390,5 +434,28 @@ final class AppStore: ObservableObject {
         WidgetSnapshotWriter.write(accounts: accounts,
                                    lastRefreshAt: lastRefreshAt,
                                    nextRefreshAt: nextRefreshAt)
+        
+        if enableResetNotifications {
+            NotificationManager.shared.scheduleNotifications(for: accounts)
+        } else {
+            NotificationManager.shared.removeAllPendingNotifications()
+        }
+    }
+    
+    private func handleNotificationToggle() {
+        if enableResetNotifications {
+            Task {
+                let granted = await NotificationManager.shared.requestAuthorization()
+                if granted {
+                    NotificationManager.shared.scheduleNotifications(for: accounts)
+                } else {
+                    Task { @MainActor in
+                        self.enableResetNotifications = false
+                    }
+                }
+            }
+        } else {
+            NotificationManager.shared.removeAllPendingNotifications()
+        }
     }
 }

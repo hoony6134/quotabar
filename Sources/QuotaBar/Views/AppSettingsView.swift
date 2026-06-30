@@ -30,6 +30,9 @@ struct AppSettingsView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+            Section("알림") {
+                Toggle("세션 초기화 시 알림 받기", isOn: $store.enableResetNotifications)
+            }
             Section {
                 Text("Claude·Codex·Cursor·Copilot은 비공식 사용량 엔드포인트를 사용합니다. Gemini·Antigravity는 공개 잔량 API가 없어 로컬 기록 기반 활동량으로 자동 추정합니다.")
                     .font(.caption)

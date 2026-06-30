@@ -6,7 +6,8 @@ struct DashboardView: View {
     @State private var showAddAccount = false
 
     private var grouped: [(service: ServiceKind, accounts: [Account])] {
-        ServiceKind.allCases.compactMap { kind in
+        // 사용자가 지정한 순서(orderedServices)를 따른다.
+        store.orderedServices.compactMap { kind in
             let list = store.accounts.filter { $0.service == kind }
             return list.isEmpty ? nil : (kind, list)
         }
@@ -65,11 +66,32 @@ struct DashboardView: View {
                     .background(service.brandColor.opacity(0.15), in: Capsule())
                     .foregroundStyle(service.brandColor)
                 Spacer()
+                serviceReorderControls(service)
             }
             ForEach(accounts) { account in
                 AccountCard(account: account)
             }
         }
+    }
+
+    /// 서비스 섹션을 위/아래로 옮기는 컨트롤(맨 위/아래면 비활성).
+    @ViewBuilder
+    private func serviceReorderControls(_ service: ServiceKind) -> some View {
+        let services = store.orderedServices
+        HStack(spacing: 2) {
+            Button { store.moveService(service, up: true) } label: {
+                Image(systemName: "chevron.up")
+            }
+            .disabled(services.first == service)
+            Button { store.moveService(service, up: false) } label: {
+                Image(systemName: "chevron.down")
+            }
+            .disabled(services.last == service)
+        }
+        .buttonStyle(.borderless)
+        .controlSize(.small)
+        .foregroundStyle(.secondary)
+        .help("이 서비스의 표시 순서를 위/아래로 이동")
     }
 }
 
@@ -105,6 +127,7 @@ struct AccountCard: View {
                         .foregroundStyle(.tertiary)
                 }
                 Spacer()
+                accountReorderControls
                 Button {
                     showSettings = true
                 } label: {
@@ -123,11 +146,54 @@ struct AccountCard: View {
                     .lineLimit(2)
             }
 
-            ForEach(account.quotas) { item in
-                QuotaRow(accountID: account.id, item: item)
+            ForEach(Array(account.quotas.enumerated()), id: \.element.id) { index, item in
+                HStack(spacing: 8) {
+                    QuotaRow(accountID: account.id, item: item)
+                    quotaReorderControls(index: index, key: item.def.key)
+                }
             }
         }
         .padding(14)
         .quotaGlassSurface(cornerRadius: 12, interactive: true)
+    }
+
+    /// 같은 서비스에 계정이 2개 이상일 때만 계정 순서 이동 컨트롤을 보여준다.
+    @ViewBuilder
+    private var accountReorderControls: some View {
+        let siblings = store.accounts.filter { $0.service == account.service }
+        if siblings.count > 1 {
+            HStack(spacing: 2) {
+                Button { store.moveAccountWithinService(id: account.id, up: true) } label: {
+                    Image(systemName: "chevron.up")
+                }
+                .disabled(siblings.first?.id == account.id)
+                Button { store.moveAccountWithinService(id: account.id, up: false) } label: {
+                    Image(systemName: "chevron.down")
+                }
+                .disabled(siblings.last?.id == account.id)
+            }
+            .buttonStyle(.borderless)
+            .controlSize(.small)
+            .foregroundStyle(.secondary)
+            .help("같은 서비스 안에서 계정 순서 이동")
+        }
+    }
+
+    /// 쿼터 행을 위/아래로 옮기는 컨트롤(맨 위/아래면 비활성).
+    @ViewBuilder
+    private func quotaReorderControls(index: Int, key: String) -> some View {
+        VStack(spacing: 0) {
+            Button { store.moveQuota(accountID: account.id, key: key, up: true) } label: {
+                Image(systemName: "chevron.up")
+            }
+            .disabled(index == 0)
+            Button { store.moveQuota(accountID: account.id, key: key, up: false) } label: {
+                Image(systemName: "chevron.down")
+            }
+            .disabled(index >= account.quotas.count - 1)
+        }
+        .buttonStyle(.borderless)
+        .controlSize(.mini)
+        .foregroundStyle(.tertiary)
     }
 }

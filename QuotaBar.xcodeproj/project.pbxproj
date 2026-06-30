@@ -18,6 +18,7 @@
 		1BEE90065A825EFA6A54D299 /* QuotaBarApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB84C086A950F5214F7F5307 /* QuotaBarApp.swift */; };
 		1DB9A990A1719542D2210096 /* Keychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8C315E9EFF8D7D3886C2DC4 /* Keychain.swift */; };
 		2047C1969D48694869845C6C /* StatusExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 253E68C2300C77071FAAC217 /* StatusExporter.swift */; };
+		227AA33872A77E795A8D0568 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA4A0D4458B788BB9EFAB6AF /* NotificationManager.swift */; };
 		255EC7F1EE2D8DADBB321574 /* AppIcon.icns in Resources */ = {isa = PBXBuildFile; fileRef = 15E7A9851FE2929B25A439C5 /* AppIcon.icns */; };
 		3D5D775482F77E906239BFD6 /* AccountSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7090AE9D7962BE39B5675FF5 /* AccountSettingsView.swift */; };
 		458C3CDB1FCE40229574321C /* QuotaBarWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFDF2EEB090720E48D66EB4F /* QuotaBarWidget.swift */; };
@@ -109,6 +110,7 @@
 		F6E126D5EF51C308D698DFA7 /* antigravity.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = antigravity.png; sourceTree = "<group>"; };
 		F8C315E9EFF8D7D3886C2DC4 /* Keychain.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Keychain.swift; sourceTree = "<group>"; };
 		F9D3A98DBA19B25AFBC59C94 /* WidgetSnapshotWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetSnapshotWriter.swift; sourceTree = "<group>"; };
+		FA4A0D4458B788BB9EFAB6AF /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		FFDCB252FD9CD433980FAE80 /* googleAI.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = googleAI.png; sourceTree = "<group>"; };
 		FFDF2EEB090720E48D66EB4F /* QuotaBarWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuotaBarWidget.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -222,6 +224,7 @@
 			isa = PBXGroup;
 			children = (
 				F8C315E9EFF8D7D3886C2DC4 /* Keychain.swift */,
+				FA4A0D4458B788BB9EFAB6AF /* NotificationManager.swift */,
 				253E68C2300C77071FAAC217 /* StatusExporter.swift */,
 				1455E2FF2155971FC91E615B /* WidgetRefreshListener.swift */,
 				2B823DFA477D4FA6885A763D /* WidgetShared.swift */,
@@ -385,6 +388,7 @@
 				10C8E4322D93F36C88C710D5 /* LocalActivity.swift in Sources */,
 				C3034EE6067FB3E53C3BE77F /* MenuBarView.swift in Sources */,
 				66B3FA7FDAD91A11FADFE17C /* Models.swift in Sources */,
+				227AA33872A77E795A8D0568 /* NotificationManager.swift in Sources */,
 				1BEE90065A825EFA6A54D299 /* QuotaBarApp.swift in Sources */,
 				D58017CD27E71B960DD7AC35 /* QuotaRow.swift in Sources */,
 				2047C1969D48694869845C6C /* StatusExporter.swift in Sources */,

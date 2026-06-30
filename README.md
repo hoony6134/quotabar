@@ -61,7 +61,12 @@ macOS 15+에서 그룹 ID 검증 문제가 생기면 `WidgetShared.swift`와 `pr
 ### Claude (Max) — 자동
 계정 추가 시 **자동 감지** 버튼: Claude Code 자격증명(키체인 `Claude Code-credentials`, `~/.claude/.credentials.json`, `~/.claude.json` 등)에서 OAuth 토큰을 매 갱신마다 다시 찾는다.
 `api.anthropic.com/api/oauth/usage`에서 5시간 세션 / 주간(전체) / 주간(Opus) 사용률(%)과 리셋 시각을 받아온다.
-401/403이 나오면 최신 자격증명을 한 번 더 감지해 재시도한다.
+
+**토큰 만료 시 자동 재발급(하이브리드).** Claude Code 토큰은 Claude Code가 실행될 때만 갱신되므로, 앱이 만료(또는 401/403)를 감지하면 다음 순서로 직접 재발급한다:
+1. 저장된 `refreshToken`으로 `console.anthropic.com/v1/oauth/token`에 직접 갱신 요청 (빠르고 쿼터 소모 없음)
+2. 실패하면 `claude` CLI를 비대화식으로 한 번 실행해 Claude Code가 스스로 갱신하게 함
+
+재발급에 성공하면 회전된 토큰을 읽어온 원본(파일/키체인)에 **다시 써서 Claude Code와 동기화**한다 — 안 그러면 refresh token 회전 때문에 Claude Code 자신의 로그인이 깨질 수 있다. (키체인이 원본이면 갱신 저장 시 키체인 접근 창이 한 번 뜰 수 있으니 **항상 허용** 권장.)
 
 ### ChatGPT/Codex (Plus) — 자동
 `~/.codex/auth.json`의 Codex 자격증명을 실시간으로 읽고 `chatgpt.com/backend-api/wham/usage`에서 Codex 5시간/주간 한도 사용률을 받아온다.

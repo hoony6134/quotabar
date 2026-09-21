@@ -1,0 +1,23 @@
+{
+  "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar--3117C44A8CE69DD9-testable-t.build/DerivedSources/resource_bundle_accessor.swift" : {
+    "const-values" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar--3117C44A8CE69DD9-testable-t.build/Objects-normal/arm64/resource_bundle_accessor.swiftconstvalues",
+    "dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar--3117C44A8CE69DD9-testable-t.build/Objects-normal/arm64/resource_bundle_accessor.d",
+    "diagnostics" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar--3117C44A8CE69DD9-testable-t.build/Objects-normal/arm64/resource_bundle_accessor.dia",
+    "object" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar--3117C44A8CE69DD9-testable-t.build/Objects-normal/arm64/resource_bundle_accessor.o",
+    "swift-dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar--3117C44A8CE69DD9-testable-t.build/Objects-normal/arm64/resource_bundle_accessor.swiftdeps"
+  },
+  "/Users/jh/Claude/Projects/ai-quota/Sources/QuotaBar/Connectors/AntigravityConnector.swift" : {
+    "const-values" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar--3117C44A8CE69DD9-testable-t.build/Objects-normal/arm64/AntigravityConnector.swiftconstvalues",
+    "dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar--3117C44A8CE69DD9-testable-t.build/Objects-normal/arm64/AntigravityConnector.d",
+    "diagnostics" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar--3117C44A8CE69DD9-testable-t.build/Objects-normal/arm64/AntigravityConnector.dia",
+    "object" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar--3117C44A8CE69DD9-testable-t.build/Objects-normal/arm64/AntigravityConnector.o",
+    "swift-dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar--3117C44A8CE69DD9-testable-t.build/Objects-normal/arm64/AntigravityConnector.swiftdeps"
+  },
+  "/Users/jh/Claude/Projects/ai-quota/Sources/QuotaBar/Connectors/ChatGPTConnector.swift" : {
+    "const-values" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar--3117C44A8CE69DD9-testable-t.build/Objects-normal/arm64/ChatGPTConnector.swiftconstvalues",
+    "dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar--3117C44A8CE69DD9-testable-t.build/Objects-normal/arm64/ChatGPTConnector.d",
+    "diagnostics" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar--3117C44A8CE69DD9-testable-t.build/Objects-normal/arm64/ChatGPTConnector.dia",
+    "object" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar--3117C44A8CE69DD9-testable-t.build/Objects-normal/arm64/ChatGPTConnector.o",
+    "swift-dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar--3117C44A8CE69DD9-testable-t.build/Objects-normal/arm64/ChatGPTConnector.swiftdeps"
+  }
+}

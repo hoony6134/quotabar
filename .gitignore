@@ -1,0 +1,24 @@
+# Swift Package Manager
+.build/
+.swiftpm/
+Package.resolved
+
+# Xcode build output / caches
+build/
+DerivedData/
+*.xcarchive
+
+# Xcode per-developer state (never share — leaks local username/paths)
+xcuserdata/
+*.xcuserstate
+*.xcuserdatad/
+
+# macOS
+.DS_Store
+
+# Local diagnostic dumps (may include local file paths / account state)
+scripts/diag-*.txt
+
+# Editors
+.vscode/
+.idea/

@@ -133,7 +133,7 @@ Sources/QuotaBar/
 │   ├── CursorConnector.swift  # api/usage + monthly-invoice
 │   └── CopilotConnector.swift # copilot_internal/user
 ├── Views/                     # 대시보드, 메뉴막대, 계정 추가/설정
-└── Util/                      # Keychain, StatusExporter(Obsidian), WidgetShared/Writer
+└── Util/                      # Keychain, NotificationManager, WidgetShared/Writer
 Sources/QuotaBarWidget/        # WidgetKit 익스텐션 (small/medium/large)
 Resources/                     # AppIcon.icns + iconset
 project.yml                    # XcodeGen 설정 (앱 + 위젯 타깃)

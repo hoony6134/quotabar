@@ -36,28 +36,72 @@ struct ClaudeConnector: QuotaConnector {
     }
 
     func fetch(credential: String) async throws -> [QuotaUpdate] {
+        // 429 직후엔 아예 네트워크를 타지 않는다 — 식지 않은 채로 계속 재시도하면
+        // 오히려 차단이 계속 연장될 수 있다("시간이 지나도 안 풀린다"는 증상의 원인).
+        if let until = Self.rateLimitedUntil, until > Date() {
+            throw ConnectorError.hint(Self.rateLimitHint(until: until))
+        }
+
         let auto = credential == Self.autoSentinel
         let token = auto ? try await Self.autoAccessToken(forceRefresh: false) : credential
         let result = try await Self.fetchUsage(token: token)
 
         switch result.code {
         case 200:
+            Self.rateLimitedUntil = nil
             return try Self.parseUsage(result.data)
         case 401 where auto, 403 where auto:
             // 토큰이 거부됨 → 강제 재발급(직접 OAuth → claude CLI) 후 1회 재시도.
             let freshToken = try await Self.autoAccessToken(forceRefresh: true)
             let retry = try await Self.fetchUsage(token: freshToken)
+            if retry.code == 429 {
+                let until = Self.cooldownDate(from: retry.response)
+                Self.rateLimitedUntil = until
+                throw ConnectorError.hint(Self.rateLimitHint(until: until))
+            }
             guard retry.code == 200 else {
                 throw ConnectorError.hint("인증 실패(\(retry.code)). 토큰을 재발급했지만 사용량 조회가 거부됐습니다. Claude Code를 한 번 실행해 로그인 상태를 확인하세요.")
             }
+            Self.rateLimitedUntil = nil
             return try Self.parseUsage(retry.data)
         case 401, 403:
             throw ConnectorError.hint("인증 실패(\(result.code)). 토큰이 만료됐거나 잘못되었습니다. 계정 설정에서 '자동 감지 사용'을 누르면 Claude Code 자격증명을 매번 다시 읽고 만료 시 자동 재발급합니다.")
         case 429:
-            throw ConnectorError.rateLimited
+            let until = Self.cooldownDate(from: result.response)
+            Self.rateLimitedUntil = until
+            throw ConnectorError.hint(Self.rateLimitHint(until: until))
         default:
             throw ConnectorError.network("HTTP \(result.code)")
         }
+    }
+
+    /// 429 이후 다음 자동 재시도까지 기다리는 시각(nil이면 정상 상태).
+    private static var rateLimitedUntil: Date?
+
+    /// 429 응답의 Retry-After를 읽어 다음 시도 시각을 정한다. 헤더가 없으면 5분,
+    /// 있어도 최소 1분은 쉰다(너무 짧은 힌트로 인한 재요청 폭주 방지).
+    private static func cooldownDate(from response: HTTPURLResponse?) -> Date {
+        let minimum: TimeInterval = 60
+        let fallback: TimeInterval = 300
+        guard let raw = response?.value(forHTTPHeaderField: "Retry-After") else {
+            return Date().addingTimeInterval(fallback)
+        }
+        if let seconds = TimeInterval(raw) {
+            return Date().addingTimeInterval(max(seconds, minimum))
+        }
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(identifier: "GMT")
+        formatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss zzz"
+        if let date = formatter.date(from: raw) {
+            return max(date, Date().addingTimeInterval(minimum))
+        }
+        return Date().addingTimeInterval(fallback)
+    }
+
+    private static func rateLimitHint(until: Date) -> String {
+        let minutes = max(1, Int(ceil(until.timeIntervalSinceNow / 60)))
+        return "요청이 제한되었습니다(429). 계속 재시도하면 제한이 더 길어질 수 있어 약 \(minutes)분 쉬었다가 자동으로 다시 시도합니다."
     }
 
     // MARK: - 토큰 해석 / 하이브리드 재발급
@@ -181,14 +225,59 @@ struct ClaudeConnector: QuotaConnector {
         return nil
     }
 
-    private static func fetchUsage(token: String) async throws -> (data: Data, code: Int) {
-        try await HTTP.get(Self.url, headers: [
+    private static func fetchUsage(token: String) async throws -> (data: Data, code: Int, response: HTTPURLResponse?) {
+        // User-Agent가 실제 설치된 Claude Code 버전과 어긋나면 공격적으로 429가 떨어진다.
+        // 버전을 하드코딩하지 않고 `claude --version`으로 매번 자동 감지한다(1시간 캐시).
+        let userAgent = await detectedUserAgent()
+        return try await HTTP.getWithResponse(Self.url, headers: [
             "Authorization": "Bearer \(token)",
             "anthropic-beta": "oauth-2025-04-20",
-            // User-Agent가 없으면 공격적으로 429가 떨어진다
-            "User-Agent": "claude-code/2.0.0",
+            "User-Agent": userAgent,
             "Accept": "application/json",
         ])
+    }
+
+    private static var cachedCLIVersion: (value: String, fetchedAt: Date)?
+
+    /// 로컬 Claude Code CLI의 실제 버전을 감지해 "claude-code/x.y.z" 형태로 반환한다.
+    /// 감지에 실패하면 마지막으로 알려진 값, 그마저 없으면 예전 하드코딩값으로 폴백한다.
+    private static func detectedUserAgent() async -> String {
+        let fallback = "claude-code/2.0.0"
+        if let cached = cachedCLIVersion, Date().timeIntervalSince(cached.fetchedAt) < 3600 {
+            return "claude-code/\(cached.value)"
+        }
+        let version = await withCheckedContinuation { (continuation: CheckedContinuation<String?, Never>) in
+            DispatchQueue.global(qos: .utility).async {
+                continuation.resume(returning: detectCLIVersionSync())
+            }
+        }
+        guard let version else {
+            return cachedCLIVersion.map { "claude-code/\($0.value)" } ?? fallback
+        }
+        cachedCLIVersion = (version, Date())
+        return "claude-code/\(version)"
+    }
+
+    private static func detectCLIVersionSync() -> String? {
+        guard let bin = locateClaudeBinary() else { return nil }
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: bin)
+        process.arguments = ["--version"]
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = Pipe()
+        process.standardInput = FileHandle.nullDevice
+        do {
+            try process.run()
+        } catch {
+            return nil
+        }
+        process.waitUntilExit()
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        guard let output = String(data: data, encoding: .utf8),
+              let match = output.range(of: #"\d+\.\d+\.\d+"#, options: .regularExpression)
+        else { return nil }
+        return String(output[match])
     }
 
     private static func parseUsage(_ data: Data) throws -> [QuotaUpdate] {

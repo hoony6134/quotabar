@@ -55,6 +55,20 @@ enum HTTP {
         return try await run(request)
     }
 
+    /// GET이지만 응답 헤더까지 필요한 커넥터(예: 429의 Retry-After)를 위한 버전.
+    static func getWithResponse(_ url: URL, headers: [String: String]) async throws -> (data: Data, code: Int, response: HTTPURLResponse?) {
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        headers.forEach { request.setValue($1, forHTTPHeaderField: $0) }
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            let http = response as? HTTPURLResponse
+            return (data, http?.statusCode ?? 0, http)
+        } catch {
+            throw ConnectorError.network(error.localizedDescription)
+        }
+    }
+
     private static func run(_ request: URLRequest) async throws -> (Data, Int) {
         do {
             let (data, response) = try await URLSession.shared.data(for: request)

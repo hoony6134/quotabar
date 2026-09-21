@@ -5,6 +5,7 @@ import AppKit
 struct MenuBarView: View {
     @EnvironmentObject var store: AppStore
     @Environment(\.openWindow) private var openWindow
+    @Environment(\.openSettings) private var openSettingsAction
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -122,7 +123,7 @@ struct MenuBarView: View {
     /// 앱 활성화 후 Settings 씬을 직접 호출한다(macOS 14+).
     private func openSettings() {
         NSApp.activate(ignoringOtherApps: true)
-        NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+        openSettingsAction()
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
             NSApp.activate(ignoringOtherApps: true)
             NSApp.windows.first(where: { $0.title.contains("설정") || $0.title.localizedCaseInsensitiveContains("settings") })?

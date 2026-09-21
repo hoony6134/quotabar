@@ -17,7 +17,7 @@ struct AddAccountView: View {
 
             Picker("서비스", selection: $service) {
                 ForEach(ServiceKind.allCases) { kind in
-                    Text("\(kind.displayName) (\(kind.planName))").tag(kind)
+                    Text(kind.displayName).tag(kind)
                 }
             }
 

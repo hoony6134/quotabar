@@ -59,12 +59,14 @@ struct DashboardView: View {
                 ServiceBadge(service: service)
                 Text(service.displayName)
                     .font(.title3.bold())
-                Text(service.planName)
-                    .font(.caption.bold())
-                    .padding(.horizontal, 7)
-                    .padding(.vertical, 2)
-                    .background(service.brandColor.opacity(0.15), in: Capsule())
-                    .foregroundStyle(service.brandColor)
+                if let planName = detectedPlanName(for: accounts) {
+                    Text(planName)
+                        .font(.caption.bold())
+                        .padding(.horizontal, 7)
+                        .padding(.vertical, 2)
+                        .background(service.brandColor.opacity(0.15), in: Capsule())
+                        .foregroundStyle(service.brandColor)
+                }
                 Spacer()
                 serviceReorderControls(service)
             }
@@ -72,6 +74,15 @@ struct DashboardView: View {
                 AccountCard(account: account)
             }
         }
+    }
+
+    /// 이 서비스의 계정들에서 실제로 감지된 플랜 이름. 계정마다 다르면 "여러 플랜",
+    /// 아직 하나도 감지되지 않았으면(하드코딩된 기본값 대신) 배지를 아예 표시하지 않는다.
+    private func detectedPlanName(for accounts: [Account]) -> String? {
+        let plans = Set(accounts.compactMap(\.detectedPlanName))
+        if plans.count == 1 { return plans.first }
+        if plans.count > 1 { return "여러 플랜" }
+        return nil
     }
 
     /// 서비스 섹션을 위/아래로 옮기는 컨트롤(맨 위/아래면 비활성).

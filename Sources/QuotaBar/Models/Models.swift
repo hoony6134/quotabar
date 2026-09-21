@@ -30,18 +30,6 @@ enum ServiceKind: String, Codable, CaseIterable, Identifiable {
         }
     }
 
-    var planName: String {
-        switch self {
-        case .claude:    return "Max"
-        case .chatgpt:   return "Plus"
-        case .googleAI:  return "AI Pro"
-        case .antigravity: return "AI Pro"
-        case .cursor:    return "Pro"
-        case .copilot:   return "Edu"
-        case .nvidiaNIM: return "Free"
-        }
-    }
-
     var brandColor: Color {
         switch self {
         case .claude:    return Color(red: 0.85, green: 0.47, blue: 0.34) // 테라코타

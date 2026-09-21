@@ -22,14 +22,6 @@ struct AppSettingsView: View {
                     }
                 }
             }
-            Section("내보내기") {
-                Toggle("Obsidian 볼트로 상태 내보내기", isOn: $store.exportToObsidian)
-                TextField("내보내기 경로 (비우면 볼트 자동 감지)", text: $store.obsidianExportPath)
-                    .textFieldStyle(.roundedBorder)
-                Text("갱신될 때마다 볼트의 '\(StatusExporter.vaultRelativePath)'에 상태를 기록합니다. Cowork의 Today Status 아티팩트가 이 파일을 읽어 AI 쿼터를 표시합니다.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
             Section("알림") {
                 Toggle("세션 초기화 시 알림 받기", isOn: $store.enableResetNotifications)
             }

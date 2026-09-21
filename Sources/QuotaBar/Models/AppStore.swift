@@ -19,12 +19,6 @@ final class AppStore: ObservableObject {
         didSet { applyActivationPolicy() }
     }
     @AppStorage("menuBarQuotaSelection") var menuBarQuotaSelection: String = MenuBarQuotaOption.worstID
-    @AppStorage("exportToObsidian") var exportToObsidian: Bool = true {
-        didSet { save() }
-    }
-    @AppStorage("obsidianExportPath") var obsidianExportPath: String = "" {
-        didSet { save() }
-    }
     @AppStorage("enableResetNotifications") var enableResetNotifications: Bool = false {
         didSet { handleNotificationToggle() }
     }
@@ -428,9 +422,6 @@ final class AppStore: ObservableObject {
     }
 
     private func writeExternalSnapshots() {
-        if exportToObsidian {
-            StatusExporter.export(accounts: accounts, customPath: obsidianExportPath)
-        }
         WidgetSnapshotWriter.write(accounts: accounts,
                                    lastRefreshAt: lastRefreshAt,
                                    nextRefreshAt: nextRefreshAt)

@@ -22,10 +22,16 @@ final class AppStore: ObservableObject {
     @AppStorage("enableResetNotifications") var enableResetNotifications: Bool = false {
         didSet { handleNotificationToggle() }
     }
+    /// iPhone 앱/위젯으로 사용률을 미러링(iCloud 키-값 저장소). 토큰은 올라가지 않는다.
+    @AppStorage("syncToiPhone") var syncToiPhone: Bool = true {
+        didSet { writeExternalSnapshots(forceCloud: syncToiPhone) }
+    }
 
     private var timer: Timer?
     private var loading = false
     private var widgetRefreshListener: WidgetRefreshListener?
+    private var cloudObserver: NSObjectProtocol?
+    private var lastHandledPhoneRefresh: Date = Date()
 
     init() {
         load()
@@ -42,6 +48,26 @@ final class AppStore: ObservableObject {
         restartTimer()
         applyActivationPolicy()
         observeWidgetRefreshRequests()
+        observePhoneRefreshRequests()
+    }
+
+    /// iPhone이 당겨서 새로고침하면 iCloud로 요청이 온다 → 즉시 갱신 후 결과를 다시 올려보낸다.
+    private func observePhoneRefreshRequests() {
+        cloudObserver = QuotaCloudSync.observeChanges { [weak self] in
+            Task { @MainActor [weak self] in
+                guard let self, self.syncToiPhone,
+                      let requested = QuotaCloudSync.refreshRequestDate,
+                      requested > self.lastHandledPhoneRefresh else { return }
+                self.lastHandledPhoneRefresh = requested
+                // 너무 잦은 갱신은 429를 부른다 — 마지막 갱신 후 30초 안이면 현재 값을 다시 올리기만 한다.
+                if let last = self.lastRefreshAt, Date().timeIntervalSince(last) < 30 {
+                    self.writeExternalSnapshots(forceCloud: true)
+                } else {
+                    await self.refreshAll()
+                }
+            }
+        }
+        QuotaCloudSync.synchronize()
     }
 
     /// 위젯의 새로고침 버튼이 보내는 분산 알림을 받아 즉시 갱신한다.
@@ -255,7 +281,7 @@ final class AppStore: ObservableObject {
             lastRefreshAt = now
             nextRefreshAt = now.addingTimeInterval(refreshInterval)
             isRefreshing = false
-            writeExternalSnapshots()
+            writeExternalSnapshots(forceCloud: true)
         }
         rolloverManualQuotas()
         for account in accounts where account.apiSyncEnabled {
@@ -300,6 +326,7 @@ final class AppStore: ObservableObject {
             if let qi = accounts[ai].quotas.firstIndex(where: { $0.def.key == update.key }) {
                 accounts[ai].quotas[qi].state.used = update.used
                 if let cap = update.cap { accounts[ai].quotas[qi].def.cap = cap }
+                if let unit = update.unit { accounts[ai].quotas[qi].def.unit = unit }
                 accounts[ai].quotas[qi].state.apiResetsAt = update.resetsAt
                 accounts[ai].quotas[qi].state.lastSynced = now
             } else {
@@ -328,6 +355,8 @@ final class AppStore: ObservableObject {
         if key == "five_hour" || key == "codex_primary" { return .rollingHours(5) }
         if key == "gemini_5h" || key == "antigravity_5h" { return .rollingHours(5) }
         if key.hasPrefix("seven_day") || key == "codex_secondary" { return .rollingDays(7) }
+        if key.hasPrefix("gemini_") && key.hasSuffix("_quota") { return .daily }
+        if key == "extra_usage" || key == "on_demand" { return .monthly(day: 1) }
         if key.hasSuffix("_day") || key.contains("_day_") { return .daily }
         return .monthly(day: 1)
     }
@@ -421,10 +450,11 @@ final class AppStore: ObservableObject {
         writeExternalSnapshots()
     }
 
-    private func writeExternalSnapshots() {
+    private func writeExternalSnapshots(forceCloud: Bool = false) {
         WidgetSnapshotWriter.write(accounts: accounts,
                                    lastRefreshAt: lastRefreshAt,
-                                   nextRefreshAt: nextRefreshAt)
+                                   nextRefreshAt: nextRefreshAt,
+                                   forceCloud: forceCloud)
         
         if enableResetNotifications {
             NotificationManager.shared.scheduleNotifications(for: accounts)

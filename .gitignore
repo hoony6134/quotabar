@@ -22,3 +22,6 @@ scripts/diag-*.txt
 # Editors
 .vscode/
 .idea/
+
+# xcodegen이 project.yml에서 생성 (xcodegen generate)
+QuotaBar.xcodeproj/

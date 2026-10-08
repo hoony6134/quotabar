@@ -10,8 +10,14 @@ struct MenuBarView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack {
+                Image(systemName: "gauge.with.dots.needle.67percent")
+                    .foregroundStyle(QuotaTheme.levelColor(utilization: store.worstUtilization))
                 Text("QuotaBar")
                     .font(.headline)
+                Text("2.0")
+                    .font(.caption2.bold())
+                    .padding(.horizontal, 5).padding(.vertical, 1)
+                    .background(Color.primary.opacity(0.1), in: Capsule())
                 Spacer()
                 Button {
                     Task { await store.refreshAll() }

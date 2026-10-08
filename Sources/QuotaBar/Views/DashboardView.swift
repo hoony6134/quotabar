@@ -15,14 +15,15 @@ struct DashboardView: View {
 
     var body: some View {
         ScrollView {
-            LazyVStack(alignment: .leading, spacing: 18) {
+            LazyVStack(alignment: .leading, spacing: 20) {
+                SummaryHero()
                 ForEach(grouped, id: \.service) { group in
                     sectionView(group.service, group.accounts)
                 }
             }
             .padding(20)
         }
-        .frame(minWidth: 560, minHeight: 480)
+        .frame(minWidth: 580, minHeight: 520)
         .navigationTitle("QuotaBar")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
@@ -62,9 +63,9 @@ struct DashboardView: View {
                 if let planName = detectedPlanName(for: accounts) {
                     Text(planName)
                         .font(.caption.bold())
-                        .padding(.horizontal, 7)
-                        .padding(.vertical, 2)
-                        .background(service.brandColor.opacity(0.15), in: Capsule())
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(service.brandColor.opacity(0.16), in: Capsule())
                         .foregroundStyle(service.brandColor)
                 }
                 Spacer()
@@ -165,7 +166,7 @@ struct AccountCard: View {
             }
         }
         .padding(14)
-        .quotaGlassSurface(cornerRadius: 12, interactive: true)
+        .quotaGlassSurface(cornerRadius: 16, interactive: true)
     }
 
     /// 같은 서비스에 계정이 2개 이상일 때만 계정 순서 이동 컨트롤을 보여준다.

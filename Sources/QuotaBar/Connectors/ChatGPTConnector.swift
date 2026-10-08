@@ -12,11 +12,39 @@ import Foundation
 /// 웹 채팅 메시지 캡(GPT 메시지/3시간 등)은 조회 경로가 없어 기본 쿼터에서 제외한다.
 struct ChatGPTConnector: QuotaConnector {
     static let autoSentinel = "auto:codex"
-    private static let url = URL(string: "https://chatgpt.com/backend-api/wham/usage")!
+    private static let defaultBase = "https://chatgpt.com/backend-api"
+
+    /// `$CODEX_HOME/config.toml`의 `chatgpt_base_url`을 존중한다 (없으면 기본 호스트).
+    private static var usageURL: URL {
+        var base = defaultBase
+        if let toml = try? String(contentsOf: codexHome.appendingPathComponent("config.toml"), encoding: .utf8) {
+            for line in toml.split(separator: "\n") {
+                let trimmed = line.trimmingCharacters(in: .whitespaces)
+                guard !trimmed.hasPrefix("#"), trimmed.hasPrefix("chatgpt_base_url") else { continue }
+                let value = trimmed.split(separator: "=", maxSplits: 1).last
+                    .map { $0.trimmingCharacters(in: CharacterSet(charactersIn: " \"'")) } ?? ""
+                if value.hasPrefix("http") { base = value }
+            }
+        }
+        while base.hasSuffix("/") { base.removeLast() }
+        return URL(string: base + "/wham/usage") ?? URL(string: defaultBase + "/wham/usage")!
+    }
+
+    /// `$CODEX_HOME` 또는 `~/.codex`
+    static var codexHome: URL {
+        if let env = ProcessInfo.processInfo.environment["CODEX_HOME"], !env.isEmpty {
+            return URL(fileURLWithPath: (env as NSString).expandingTildeInPath)
+        }
+        return FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".codex")
+    }
 
     struct Credentials {
         var accessToken: String
         var accountId: String?
+        /// id_token JWT 클레임에서 읽은 플랜 (예: "plus", "pro")
+        var planFromJWT: String?
+        /// 토큰 만료 시각(JWT exp)
+        var expiresAt: Date?
     }
 
     func fetch(credential: String) async throws -> [QuotaUpdate] {
@@ -27,7 +55,12 @@ struct ChatGPTConnector: QuotaConnector {
             }
             creds = detected
         } else {
-            creds = Credentials(accessToken: credential, accountId: nil)
+            creds = Credentials(accessToken: credential, accountId: nil, planFromJWT: nil, expiresAt: nil)
+        }
+
+        // 토큰이 만료 임박이면 CLI가 스스로 갱신하도록 한다 (CodexBar와 같은 방침: auth.json을 직접 쓰지 않는다).
+        if credential == Self.autoSentinel, let exp = creds.expiresAt, exp < Date().addingTimeInterval(300) {
+            if let viaCLI = await Self.fetchViaAppServer() { return viaCLI }
         }
 
         var headers: [String: String] = [
@@ -39,10 +72,12 @@ struct ChatGPTConnector: QuotaConnector {
             headers["ChatGPT-Account-Id"] = accountId
         }
 
-        let (data, code) = try await HTTP.get(Self.url, headers: headers)
+        let (data, code) = try await HTTP.get(Self.usageURL, headers: headers)
         switch code {
         case 200: break
         case 401, 403:
+            // 2순위: Codex CLI의 app-server(JSON-RPC)로 직접 조회 — CLI가 토큰 갱신까지 처리한다.
+            if credential == Self.autoSentinel, let viaCLI = await Self.fetchViaAppServer() { return viaCLI }
             throw ConnectorError.hint("인증 실패(\(code)). Codex CLI를 한 번 실행하거나 `codex login`으로 토큰을 갱신하세요.")
         case 429: throw ConnectorError.rateLimited
         default: throw ConnectorError.network("HTTP \(code)")
@@ -53,17 +88,19 @@ struct ChatGPTConnector: QuotaConnector {
         }
 
         var updates: [QuotaUpdate] = []
+        let plan = PlanDetection.normalize(json["plan_type"] as? String)
+            ?? PlanDetection.from(json: json) ?? PlanDetection.normalize(creds.planFromJWT)
         let container = (json["rate_limit"] as? [String: Any])
             ?? (json["rate_limits"] as? [String: Any])
             ?? json
 
         if let window = container["primary_window"] as? [String: Any],
            let update = Self.parseWindow(window, key: "codex_primary", name: "Codex 세션 (5시간)") {
-            updates.append(update.withPlan(PlanDetection.from(json: json)))
+            updates.append(update.withPlan(plan))
         }
         if let window = container["secondary_window"] as? [String: Any],
            let update = Self.parseWindow(window, key: "codex_secondary", name: "Codex 주간") {
-            updates.append(update.withPlan(PlanDetection.from(json: json)))
+            updates.append(update.withPlan(plan))
         }
 
         // 추가 한도 (모델별/코드리뷰 등)
@@ -76,7 +113,7 @@ struct ChatGPTConnector: QuotaConnector {
                 if let update = Self.parseWindow(windowObj,
                                                  key: "codex_extra_\(index)",
                                                  name: "Codex \(name)") {
-                    updates.append(update.withPlan(PlanDetection.from(json: json)))
+                    updates.append(update.withPlan(plan))
                 }
             }
         }
@@ -116,20 +153,125 @@ struct ChatGPTConnector: QuotaConnector {
     }
 
     static func detectCodexCredentials() -> Credentials? {
-        let path = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent(".codex/auth.json")
-        guard let data = try? Data(contentsOf: path),
+        let path = codexHome.appendingPathComponent("auth.json")
+        // 쓰는 도중인 파일을 읽을 수 있어 짧게 두 번 재시도 (CodexBar와 동일)
+        var data: Data?
+        for attempt in 0..<3 {
+            data = try? Data(contentsOf: path)
+            if data != nil, (try? JSONSerialization.jsonObject(with: data!)) != nil { break }
+            if attempt < 2 { Thread.sleep(forTimeInterval: 0.05) }
+        }
+        guard let data,
               let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
         else { return nil }
 
-        // 일반적 구조: {"tokens": {"access_token": ..., "account_id": ...}, ...}
+        // 일반적 구조: {"tokens": {"access_token": ..., "id_token": ..., "account_id": ...}, ...}
         let tokens = (json["tokens"] as? [String: Any]) ?? json
         guard let accessToken = tokens["access_token"] as? String, !accessToken.isEmpty else {
             return nil
         }
         let accountId = (tokens["account_id"] as? String)
             ?? (json["account_id"] as? String)
-        return Credentials(accessToken: accessToken, accountId: accountId)
+        let idClaims = (tokens["id_token"] as? String).flatMap(jwtClaims)
+        let authClaims = idClaims?["https://api.openai.com/auth"] as? [String: Any]
+        let plan = authClaims?["chatgpt_plan_type"] as? String
+        let exp = jwtClaims(accessToken)?["exp"] as? NSNumber
+        return Credentials(accessToken: accessToken,
+                           accountId: accountId ?? (authClaims?["chatgpt_account_id"] as? String),
+                           planFromJWT: plan,
+                           expiresAt: exp.map { Date(timeIntervalSince1970: $0.doubleValue) })
+    }
+
+    /// JWT payload(서명 검증 없음 — 표시용 클레임만 읽는다)
+    static func jwtClaims(_ jwt: String) -> [String: Any]? {
+        let parts = jwt.split(separator: ".")
+        guard parts.count >= 2 else { return nil }
+        var b64 = String(parts[1]).replacingOccurrences(of: "-", with: "+").replacingOccurrences(of: "_", with: "/")
+        while b64.count % 4 != 0 { b64 += "=" }
+        guard let data = Data(base64Encoded: b64) else { return nil }
+        return (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
+    }
+
+    // MARK: - Codex CLI app-server (JSON-RPC) 폴백
+
+    /// `codex -s read-only -a never app-server`에 JSON-RPC로 `account/rateLimits/read`를 요청한다.
+    /// 실패하면 nil (호출부가 원래 오류를 낸다). 응답 필드명은 버전에 따라 달라 관대하게 파싱한다.
+    static func fetchViaAppServer() async -> [QuotaUpdate]? {
+        await withCheckedContinuation { (continuation: CheckedContinuation<[QuotaUpdate]?, Never>) in
+            DispatchQueue.global(qos: .utility).async {
+                continuation.resume(returning: runAppServerSync())
+            }
+        }
+    }
+
+    private static func runAppServerSync() -> [QuotaUpdate]? {
+        guard let bin = locateCodexBinary() else { return nil }
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: bin)
+        process.arguments = ["-s", "read-only", "-a", "never", "app-server"]
+        let stdin = Pipe(), stdout = Pipe()
+        process.standardInput = stdin
+        process.standardOutput = stdout
+        process.standardError = FileHandle.nullDevice
+        do { try process.run() } catch { return nil }
+        defer { if process.isRunning { process.terminate() } }
+        // 응답이 없어도 읽기가 영원히 막히지 않도록 10초 뒤 프로세스를 종료한다.
+        DispatchQueue.global().asyncAfter(deadline: .now() + 10) {
+            if process.isRunning { process.terminate() }
+        }
+
+        func send(_ obj: [String: Any]) {
+            guard var data = try? JSONSerialization.data(withJSONObject: obj) else { return }
+            data.append(0x0A)
+            try? stdin.fileHandleForWriting.write(contentsOf: data)
+        }
+        send(["jsonrpc": "2.0", "id": 1, "method": "initialize",
+              "params": ["clientInfo": ["name": "quotabar", "title": "QuotaBar", "version": "2.0"]]])
+        send(["jsonrpc": "2.0", "method": "initialized", "params": [String: Any]()])
+        send(["jsonrpc": "2.0", "id": 2, "method": "account/rateLimits/read", "params": [String: Any]()])
+
+        // 응답 줄을 최대 10초 동안 읽는다.
+        let deadline = Date().addingTimeInterval(10)
+        var buffer = Data()
+        let handle = stdout.fileHandleForReading
+        while Date() < deadline {
+            let chunk = handle.availableData
+            if chunk.isEmpty { break }
+            buffer.append(chunk)
+            for line in buffer.split(separator: 0x0A) {
+                guard let obj = try? JSONSerialization.jsonObject(with: Data(line)) as? [String: Any],
+                      (obj["id"] as? NSNumber)?.intValue == 2,
+                      let result = obj["result"] as? [String: Any] else { continue }
+                return parseRPCRateLimits(result)
+            }
+        }
+        return nil
+    }
+
+    private static func parseRPCRateLimits(_ result: [String: Any]) -> [QuotaUpdate]? {
+        let limits = (result["rateLimits"] as? [String: Any]) ?? result
+        var updates: [QuotaUpdate] = []
+        for (field, key, name) in [("primary", "codex_primary", "Codex 세션 (5시간)"),
+                                   ("secondary", "codex_secondary", "Codex 주간")] {
+            guard let w = limits[field] as? [String: Any] else { continue }
+            let used = (w["usedPercent"] as? NSNumber)?.doubleValue
+                ?? (w["used_percent"] as? NSNumber)?.doubleValue
+            guard let used else { continue }
+            var resets: Date?
+            if let t = (w["resetsAt"] as? NSNumber)?.doubleValue ?? (w["resets_at"] as? NSNumber)?.doubleValue, t > 0 {
+                resets = Date(timeIntervalSince1970: t > 1_000_000_000_000 ? t / 1000 : t)
+            }
+            updates.append(QuotaUpdate(key: key, name: name, used: used, cap: 100, unit: "%", resetsAt: resets))
+        }
+        return updates.isEmpty ? nil : updates
+    }
+
+    private static func locateCodexBinary() -> String? {
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        let candidates = ["/opt/homebrew/bin/codex", "/usr/local/bin/codex",
+                          "\(home)/.local/bin/codex", "\(home)/.bun/bin/codex",
+                          "\(home)/.npm-global/bin/codex", "/Applications/Codex.app/Contents/Resources/codex"]
+        return candidates.first { FileManager.default.isExecutableFile(atPath: $0) }
     }
 }
 

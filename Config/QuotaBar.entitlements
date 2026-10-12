@@ -6,5 +6,7 @@
 	<array>
 		<string>$(TeamIdentifierPrefix)com.wevoid.quotabar</string>
 	</array>
+	<key>com.apple.developer.ubiquity-kvstore-identifier</key>
+	<string>$(TeamIdentifierPrefix)com.wevoid.quotabar</string>
 </dict>
 </plist>

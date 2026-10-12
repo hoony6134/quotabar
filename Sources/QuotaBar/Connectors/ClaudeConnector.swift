@@ -42,6 +42,11 @@ struct ClaudeConnector: QuotaConnector {
             throw ConnectorError.hint(Self.rateLimitHint(until: until))
         }
 
+        // claude.ai 웹 세션 쿠키(sessionKey)를 붙여넣은 경우: OAuth 대신 웹 API 사용 (2번째 경로)
+        if Self.isWebSession(credential) {
+            return try await Self.fetchViaWeb(sessionKey: Self.extractSessionKey(credential))
+        }
+
         let auto = credential == Self.autoSentinel
         let token = auto ? try await Self.autoAccessToken(forceRefresh: false) : credential
         let result = try await Self.fetchUsage(token: token)
@@ -285,28 +290,87 @@ struct ClaudeConnector: QuotaConnector {
             throw ConnectorError.schemaChanged("JSON 아님")
         }
 
+        let plan = PlanDetection.from(json: json)
         var updates: [QuotaUpdate] = []
+        // 응답에 있는 윈도우만 반영한다 (플랜에 따라 Opus/Sonnet 윈도우가 없을 수 있음).
         let windows: [(key: String, name: String)] = [
             ("five_hour", "세션 (5시간)"),
             ("seven_day", "주간 (전체 모델)"),
             ("seven_day_opus", "주간 (Opus)"),
             ("seven_day_sonnet", "주간 (Sonnet)"),
+            ("seven_day_routines", "주간 (루틴)"),
+            ("seven_day_cowork", "주간 (Cowork)"),
         ]
 
         for window in windows {
-            guard let obj = json[window.key] as? [String: Any] else { continue }
-            let utilization = (obj["utilization"] as? NSNumber)?.doubleValue ?? 0
+            // 값이 null이면(해당 윈도우 없음) 건너뛴다.
+            guard let obj = json[window.key] as? [String: Any],
+                  let utilization = (obj["utilization"] as? NSNumber)?.doubleValue else { continue }
             let resetsAt = DateParsing.iso8601(obj["resets_at"] as? String)
             updates.append(QuotaUpdate(key: window.key, name: window.name,
                                        used: utilization, cap: 100, unit: "%",
-                                       resetsAt: resetsAt,
-                                       planName: PlanDetection.from(json: json)))
+                                       resetsAt: resetsAt, planName: plan))
+        }
+
+        // 추가 사용량(Extra usage) — 월 한도 대비 사용률
+        if let extra = json["extra_usage"] as? [String: Any],
+           (extra["is_enabled"] as? Bool) ?? true,
+           let utilization = (extra["utilization"] as? NSNumber)?.doubleValue {
+            updates.append(QuotaUpdate(key: "extra_usage", name: "추가 사용량 (월)",
+                                       used: utilization, cap: 100, unit: "%",
+                                       resetsAt: nil, planName: plan))
         }
 
         guard !updates.isEmpty else {
             throw ConnectorError.schemaChanged("five_hour/seven_day 필드 없음")
         }
         return updates
+    }
+
+    // MARK: - 웹 세션(sessionKey) 경로
+
+    private static func isWebSession(_ credential: String) -> Bool {
+        credential.hasPrefix("sessionKey=") || credential.hasPrefix("sk-ant-sid")
+    }
+
+    private static func extractSessionKey(_ credential: String) -> String {
+        if let range = credential.range(of: "sessionKey=") {
+            let rest = credential[range.upperBound...]
+            return String(rest.prefix { $0 != ";" }).trimmingCharacters(in: .whitespaces)
+        }
+        return credential.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    /// claude.ai 웹 API: /api/organizations → /api/organizations/{id}/usage.
+    /// (OAuth 토큰에 user:profile 스코프가 없거나 CLI 로그인이 없을 때의 대안)
+    private static func fetchViaWeb(sessionKey: String) async throws -> [QuotaUpdate] {
+        let headers = [
+            "Cookie": "sessionKey=\(sessionKey)",
+            "Accept": "application/json",
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15",
+        ]
+        let (orgData, orgCode) = try await HTTP.get(URL(string: "https://claude.ai/api/organizations")!,
+                                                   headers: headers)
+        switch orgCode {
+        case 200: break
+        case 401, 403:
+            throw ConnectorError.hint("claude.ai 세션이 만료됐거나 Cloudflare 확인이 필요합니다(\(orgCode)). 브라우저에서 claude.ai에 다시 로그인한 뒤 sessionKey를 새로 복사하세요.")
+        case 429: throw ConnectorError.rateLimited
+        default: throw ConnectorError.network("HTTP \(orgCode)")
+        }
+        guard let orgs = try? JSONSerialization.jsonObject(with: orgData) as? [[String: Any]],
+              let orgID = orgs.first(where: { ($0["uuid"] as? String) != nil })?["uuid"] as? String else {
+            throw ConnectorError.schemaChanged("organizations 응답에 uuid 없음")
+        }
+        guard let url = URL(string: "https://claude.ai/api/organizations/\(orgID)/usage") else {
+            throw ConnectorError.network("URL 오류")
+        }
+        let (data, code) = try await HTTP.get(url, headers: headers)
+        guard code == 200 else {
+            if code == 429 { throw ConnectorError.rateLimited }
+            throw ConnectorError.network("HTTP \(code)")
+        }
+        return try parseUsage(data)
     }
 
     // MARK: - 새 토큰 영속화 (Claude Code와 동기화)

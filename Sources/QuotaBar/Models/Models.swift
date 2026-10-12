@@ -81,7 +81,9 @@ enum ServiceKind: String, Codable, CaseIterable, Identifiable {
         case .chatgpt: return ChatGPTConnector.autoSentinel
         case .googleAI: return GeminiConnector.autoSentinel
         case .antigravity: return AntigravityConnector.autoSentinel
-        case .cursor, .copilot, .nvidiaNIM: return nil
+        case .cursor: return CursorConnector.autoSentinel
+        case .copilot: return CopilotConnector.autoSentinel
+        case .nvidiaNIM: return nil
         }
     }
 
@@ -89,7 +91,7 @@ enum ServiceKind: String, Codable, CaseIterable, Identifiable {
     var authHint: String {
         switch self {
         case .claude:
-            return "'자동 감지'는 Claude Code 자격증명을 저장하지 않고 매 갱신마다 다시 읽습니다. 파일을 먼저 보고, 키체인은 확인 창 없이 접근 가능한 항목만 조용히 조회합니다."
+            return "'자동 감지'는 Claude Code 자격증명을 저장하지 않고 매 갱신마다 다시 읽습니다. 파일을 먼저 보고, 키체인은 확인 창 없이 접근 가능한 항목만 조용히 조회합니다. Claude Code가 없다면 claude.ai의 sessionKey 쿠키(sk-ant-sid…)를 붙여넣어도 됩니다."
         case .chatgpt:
             return "'자동 감지'는 Codex 자격증명(~/.codex/auth.json)을 실시간으로 읽어 Codex 5시간/주간 한도를 조회합니다."
         case .googleAI:
@@ -97,9 +99,9 @@ enum ServiceKind: String, Codable, CaseIterable, Identifiable {
         case .antigravity:
             return "'자동 감지'는 Antigravity 로컬 상태(~/.gemini/antigravity)를 읽어 최근 에이전트 활동량을 추정합니다."
         case .cursor:
-            return "cursor.com 로그인 후 브라우저 개발자도구 → Cookies → WorkosCursorSessionToken 값을 붙여넣으세요."
+            return "'자동 감지'는 설치된 Cursor 앱의 로그인 상태를 읽기 전용으로 사용합니다. 앱이 없다면 cursor.com 로그인 후 개발자도구 → Cookies → WorkosCursorSessionToken 값을 붙여넣으세요."
         case .copilot:
-            return "GitHub Personal Access Token (Copilot 사용 계정, 'read:user' 권한이면 충분)."
+            return "'자동 감지'는 VS Code 등 에디터의 Copilot 로그인(또는 `gh auth token`)을 사용합니다. 직접 입력하려면 GitHub 토큰(read:user 권한)을 붙여넣으세요."
         case .nvidiaNIM:
             return "자동으로 읽을 수 있는 로컬 기록이나 사용량 API가 없어 기본 목록에서 제외했습니다."
         }
@@ -236,11 +238,6 @@ struct MenuBarQuotaOption: Identifiable, Hashable {
 
 enum UtilizationLevel {
     static func color(_ value: Double) -> Color {
-        switch value {
-        case ..<0.5:  return .green
-        case ..<0.75: return .yellow
-        case ..<0.9:  return .orange
-        default:      return .red
-        }
+        QuotaTheme.levelColor(utilization: value)
     }
 }

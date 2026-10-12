@@ -64,17 +64,68 @@ struct GaugeBar: View {
     var height: CGFloat = 8
 
     var body: some View {
-        GeometryReader { geo in
-            ZStack(alignment: .leading) {
-                Capsule()
-                    .fill(Color.primary.opacity(0.08))
-                Capsule()
-                    .fill(UtilizationLevel.color(utilization))
-                    .frame(width: max(geo.size.width * utilization, utilization > 0 ? height : 0))
+        QuotaBarGauge(percent: utilization * 100, height: height)
+            .animation(.easeOut(duration: 0.25), value: utilization)
+    }
+}
+
+/// 상단 요약 히어로: 가장 높은 사용률 링 + 계정/쿼터 수 + 마지막 동기화
+struct SummaryHero: View {
+    @EnvironmentObject var store: AppStore
+
+    var body: some View {
+        let percent = store.worstUtilization * 100
+        HStack(spacing: 18) {
+            QuotaRing(percent: percent, lineWidth: 10) {
+                VStack(spacing: 0) {
+                    Text("\(Int(percent.rounded()))")
+                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                        .monospacedDigit()
+                    Text("%")
+                        .font(.system(size: 11, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.secondary)
+                }
             }
+            .frame(width: 84, height: 84)
+
+            VStack(alignment: .leading, spacing: 5) {
+                Text(headline(percent: percent))
+                    .font(.title3.bold())
+                Text(detail)
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                HStack(spacing: 10) {
+                    if let last = store.lastRefreshAt {
+                        Label("동기화 \(last.formatted(date: .omitted, time: .shortened))",
+                              systemImage: "arrow.triangle.2.circlepath")
+                    }
+                    if store.syncToiPhone {
+                        Label("iPhone 미러링", systemImage: "iphone.gen3.radiowaves.left.and.right")
+                    }
+                }
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+                .labelStyle(.titleAndIcon)
+            }
+            Spacer(minLength: 0)
         }
-        .frame(height: height)
-        .animation(.easeOut(duration: 0.25), value: utilization)
+        .padding(18)
+        .quotaGlassSurface(cornerRadius: 18)
+        .accessibilityElement(children: .combine)
+    }
+
+    private func headline(percent: Double) -> String {
+        switch percent {
+        case ..<50:  return "여유로워요"
+        case ..<75:  return "절반 이상 사용했어요"
+        case ..<90:  return "한도가 가까워지고 있어요"
+        default:     return "곧 한도에 도달해요"
+        }
+    }
+
+    private var detail: String {
+        let quotas = store.accounts.reduce(0) { $0 + $1.quotas.count }
+        return "계정 \(store.accounts.count)개 · 쿼터 \(quotas)개 추적 중"
     }
 }
 

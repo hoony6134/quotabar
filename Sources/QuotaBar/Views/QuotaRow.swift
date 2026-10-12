@@ -20,10 +20,16 @@ struct QuotaRow: View {
                         .help("API 자동 동기화")
                 }
                 Spacer()
-                Text(Fmt.usageLine(item))
-                    .font(compact ? .caption2 : .caption)
+                Text("\(Int((item.utilization * 100).rounded()))%")
+                    .font((compact ? Font.caption : Font.callout).bold())
                     .monospacedDigit()
-                    .foregroundStyle(item.utilization >= 0.9 ? .red : .secondary)
+                    .foregroundStyle(QuotaTheme.levelColor(utilization: item.utilization))
+                if item.def.unit != "%" {
+                    Text(Fmt.usageLine(item))
+                        .font(.caption2)
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
+                }
             }
             GaugeBar(utilization: item.utilization, height: compact ? 5 : 7)
             ResetCountdown(resetsAt: item.resetsAt, periodLabel: item.def.period.label)

@@ -1,0 +1,23 @@
+{
+  "/Users/jh/Claude/Projects/ai-quota/Sources/QuotaBar/Models/AppStore.swift" : {
+    "const-values" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AppStore.swiftconstvalues",
+    "dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AppStore.d",
+    "diagnostics" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AppStore.dia",
+    "object" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AppStore.o",
+    "swift-dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/AppStore.swiftdeps"
+  },
+  "/Users/jh/Claude/Projects/ai-quota/Sources/QuotaBar/Models/DefaultQuotas.swift" : {
+    "const-values" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/DefaultQuotas.swiftconstvalues",
+    "dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/DefaultQuotas.d",
+    "diagnostics" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/DefaultQuotas.dia",
+    "object" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/DefaultQuotas.o",
+    "swift-dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/DefaultQuotas.swiftdeps"
+  },
+  "/Users/jh/Claude/Projects/ai-quota/Sources/QuotaBar/Models/Models.swift" : {
+    "const-values" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/Models.swiftconstvalues",
+    "dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/Models.d",
+    "diagnostics" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/Models.dia",
+    "object" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/Models.o",
+    "swift-dependencies" : "/Users/jh/Claude/Projects/ai-quota/.build/out/Intermediates.noindex/QuotaBar.build/Debug/QuotaBar-p.build/Objects-normal/arm64/Models.swiftdeps"
+  }
+}

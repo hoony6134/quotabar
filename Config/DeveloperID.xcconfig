@@ -1,0 +1,6 @@
+// Manual Developer ID signing used by the CI release (see docs/CICD.md)
+CODE_SIGN_STYLE = Manual
+CODE_SIGN_IDENTITY = Developer ID Application
+QB_PROFILE_QuotaBar = QuotaBar DeveloperID
+QB_PROFILE_QuotaBarWidget = QuotaBar Widget DeveloperID
+PROVISIONING_PROFILE_SPECIFIER = $(QB_PROFILE_$(TARGET_NAME))

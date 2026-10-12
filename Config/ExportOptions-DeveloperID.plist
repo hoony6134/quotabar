@@ -7,7 +7,16 @@
 	<key>teamID</key>
 	<string>2S9H42VJUA</string>
 	<key>signingStyle</key>
-	<string>automatic</string>
+	<string>manual</string>
+	<key>signingCertificate</key>
+	<string>Developer ID Application</string>
+	<key>provisioningProfiles</key>
+	<dict>
+		<key>com.wevoid.quotabar</key>
+		<string>QuotaBar DeveloperID</string>
+		<key>com.wevoid.quotabar.widget</key>
+		<string>QuotaBar Widget DeveloperID</string>
+	</dict>
 	<key>destination</key>
 	<string>export</string>
 </dict>

@@ -75,6 +75,21 @@ jobs:
           rm -f "$RUNNER_TEMP/cert.p12"
           security find-identity -v -p codesigning "$KC"
 
+      - name: Install Developer ID provisioning profiles
+        env:
+          PROFILE_APP_B64: ${{ secrets.DEVELOPER_ID_PROFILE_APP_BASE64 }}
+          PROFILE_WIDGET_B64: ${{ secrets.DEVELOPER_ID_PROFILE_WIDGET_BASE64 }}
+        run: |
+          PDIR="$HOME/Library/MobileDevice/Provisioning Profiles"
+          mkdir -p "$PDIR"
+          echo "$PROFILE_APP_B64" | base64 --decode > "$RUNNER_TEMP/app.provisionprofile"
+          echo "$PROFILE_WIDGET_B64" | base64 --decode > "$RUNNER_TEMP/widget.provisionprofile"
+          for f in "$RUNNER_TEMP/app.provisionprofile" "$RUNNER_TEMP/widget.provisionprofile"; do
+            UUID=$(security cms -D -i "$f" | plutil -extract UUID raw -)
+            cp "$f" "$PDIR/$UUID.provisionprofile"
+          done
+          ls "$PDIR"
+
       - name: Archive
         run: |
           set -o pipefail
@@ -87,10 +102,7 @@ jobs:
             DEVELOPMENT_TEAM="$TEAM_ID" \
             MARKETING_VERSION="${{ steps.ver.outputs.version }}" \
             CURRENT_PROJECT_VERSION="${{ github.run_number }}" \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath "$ASC_KEY_PATH" \
-            -authenticationKeyID "${{ secrets.ASC_KEY_ID }}" \
-            -authenticationKeyIssuerID "${{ secrets.ASC_ISSUER_ID }}" \
+            -xcconfig Config/DeveloperID.xcconfig \
             archive | tail -n 30
 
       - name: Export (Developer ID)
@@ -99,11 +111,7 @@ jobs:
           xcodebuild -exportArchive \
             -archivePath "$RUNNER_TEMP/QuotaBar.xcarchive" \
             -exportOptionsPlist Config/ExportOptions-DeveloperID.plist \
-            -exportPath "$RUNNER_TEMP/export" \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath "$ASC_KEY_PATH" \
-            -authenticationKeyID "${{ secrets.ASC_KEY_ID }}" \
-            -authenticationKeyIssuerID "${{ secrets.ASC_ISSUER_ID }}" | tail -n 30
+            -exportPath "$RUNNER_TEMP/export" | tail -n 30
 
       - name: Notarize app
         run: |

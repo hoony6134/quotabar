@@ -17,6 +17,8 @@ git tag v2.0.0 && git push origin v2.0.0
 |---|---|
 | `DEVELOPER_ID_APP_P12_BASE64` | `Developer ID Application` 인증서(.p12)를 base64로 인코딩한 값 |
 | `DEVELOPER_ID_APP_P12_PASSWORD` | 위 .p12 내보낼 때 정한 암호 |
+| `DEVELOPER_ID_PROFILE_APP_BASE64` | `QuotaBar DeveloperID` 프로비저닝 프로파일(.provisionprofile)을 base64로 인코딩한 값 |
+| `DEVELOPER_ID_PROFILE_WIDGET_BASE64` | `QuotaBar Widget DeveloperID` 프로파일을 base64로 인코딩한 값 |
 | `ASC_KEY_P8_BASE64` | App Store Connect API 키(.p8)를 base64로 인코딩한 값 |
 | `ASC_KEY_ID` | API 키 ID |
 | `ASC_ISSUER_ID` | API 발급자 ID |
@@ -34,3 +36,5 @@ git tag v2.0.0 && git push origin v2.0.0
 - 러너/Xcode: `macos-26` + Xcode 26 선택 단계. 코드가 iOS/macOS 26 API(`glassEffect` 등)를 써서 Xcode 16.x로는 컴파일되지 않는다.
 - 프로비저닝: 아카이브·내보내기 단계는 API 키로 `-allowProvisioningUpdates`를 써서 Developer ID 프로파일(App Groups, iCloud KVS)을 자동 생성한다.
 - iOS App Store 배포는 별도 (`docs/APP_STORE.md`).
+
+> 릴리스는 클라우드 서명 대신 **수동 서명**(Developer ID 인증서 + 프로비저닝 프로파일)을 사용합니다. 프로파일은 `Config/DeveloperID.xcconfig`와 `Config/ExportOptions-DeveloperID.plist`의 이름과 일치해야 하며, 만료(2027-02) 전에 포털에서 재발급 후 시크릿을 갱신하세요. API 키는 notarytool 전용입니다.

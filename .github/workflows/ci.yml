@@ -12,7 +12,7 @@ concurrency:
 jobs:
   build:
     name: Build (${{ matrix.scheme }})
-    runs-on: macos-15
+    runs-on: macos-26
     strategy:
       fail-fast: false
       matrix:
@@ -25,6 +25,13 @@ jobs:
             destination: generic/platform=iOS
     steps:
       - uses: actions/checkout@v4
+
+      - name: Select latest Xcode 26
+        run: |
+          XC="$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)"
+          [ -n "$XC" ] || { echo "Xcode 26 not found"; ls /Applications | grep -i xcode; exit 1; }
+          sudo xcode-select -s "$XC"
+          xcodebuild -version
 
       - name: Install XcodeGen
         run: brew install xcodegen

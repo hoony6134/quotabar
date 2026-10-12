@@ -19,10 +19,17 @@ env:
 
 jobs:
   release:
-    runs-on: macos-15
+    runs-on: macos-26
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+
+      - name: Select latest Xcode 26
+        run: |
+          XC="$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)"
+          [ -n "$XC" ] || { echo "Xcode 26 not found"; ls /Applications | grep -i xcode; exit 1; }
+          sudo xcode-select -s "$XC"
+          xcodebuild -version
 
       - name: Resolve version
         id: ver

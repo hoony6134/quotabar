@@ -31,6 +31,6 @@ git tag v2.0.0 && git push origin v2.0.0
    ```
 
 ## 참고
-- 러너/Xcode: 기본은 `macos-15`. 프로젝트가 더 새로운 SDK를 요구하면 워크플로의 `runs-on`을 바꾸거나 Xcode 선택 단계를 추가한다.
+- 러너/Xcode: `macos-26` + Xcode 26 선택 단계. 코드가 iOS/macOS 26 API(`glassEffect` 등)를 써서 Xcode 16.x로는 컴파일되지 않는다.
 - 프로비저닝: 아카이브·내보내기 단계는 API 키로 `-allowProvisioningUpdates`를 써서 Developer ID 프로파일(App Groups, iCloud KVS)을 자동 생성한다.
 - iOS App Store 배포는 별도 (`docs/APP_STORE.md`).

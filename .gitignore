@@ -25,3 +25,9 @@ scripts/diag-*.txt
 
 # xcodegen이 project.yml에서 생성 (xcodegen generate)
 QuotaBar.xcodeproj/
+
+# xcodegen이 생성하는 iOS Info.plist
+Config/iOS/*-Info.plist
+
+# 로컬 백업
+.git-backup-*.tar.gz

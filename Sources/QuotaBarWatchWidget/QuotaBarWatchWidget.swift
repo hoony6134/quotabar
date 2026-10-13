@@ -106,13 +106,17 @@ struct WatchQuotaProvider: AppIntentTimelineProvider {
         return Timeline(entries: entries, policy: .after(now.addingTimeInterval(30 * 60)))
     }
 
-    /// watchOS는 기본 구현이 없어 필수. 위젯 갤러리에 한도별 추천 구성을 보여준다.
+    /// watchOS는 설정 가능한 위젯을 이 추천 목록으로만 컴플리케이션 목록에 보여준다.
+    /// 목록이 비면 위젯 자체가 사라지므로(예: iCloud 데이터를 아직 못 읽은 때) 기본 구성을 항상 맨 앞에 둔다.
     func recommendations() -> [AppIntentRecommendation<WatchQuotaConfigIntent>] {
-        WatchQuotaItemQuery.allEntities().prefix(10).map { entity in
+        var result = [AppIntentRecommendation(intent: WatchQuotaConfigIntent(),
+                                              description: "가장 높은 사용률")]
+        for entity in WatchQuotaItemQuery.allEntities().prefix(10) {
             var intent = WatchQuotaConfigIntent()
             intent.items = [entity]
-            return AppIntentRecommendation(intent: intent, description: "\(entity.title)")
+            result.append(AppIntentRecommendation(intent: intent, description: "\(entity.title)"))
         }
+        return result
     }
 
     /// 사용자가 고른 항목을 고른 순서대로 (스냅샷에 있는 것만). 선택이 없으면 빈 배열.

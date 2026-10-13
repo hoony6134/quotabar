@@ -32,6 +32,8 @@ final class AppStore: ObservableObject {
     private var widgetRefreshListener: WidgetRefreshListener?
     private var cloudObserver: NSObjectProtocol?
     private var lastHandledPhoneRefresh: Date = Date()
+    private var appNapActivity: NSObjectProtocol?
+    private var wakeObservers: [NSObjectProtocol] = []
 
     init() {
         load()
@@ -49,6 +51,8 @@ final class AppStore: ObservableObject {
         applyActivationPolicy()
         observeWidgetRefreshRequests()
         observePhoneRefreshRequests()
+        preventAppNap()
+        observeWake()
     }
 
     /// iPhone이 당겨서 새로고침하면 iCloud로 요청이 온다 → 즉시 갱신 후 결과를 다시 올려보낸다.
@@ -407,12 +411,40 @@ final class AppStore: ObservableObject {
         timer?.invalidate()
         let interval = refreshInterval
         nextRefreshAt = Date().addingTimeInterval(interval)
-        timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
+        let newTimer = Timer(timeInterval: interval, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
                 await self?.refreshAll()
             }
         }
+        // 타이머 병합으로 갱신이 수십 분씩 밀리지 않도록 허용 오차를 작게 둔다.
+        newTimer.tolerance = min(10, interval * 0.1)
+        RunLoop.main.add(newTimer, forMode: .common)
+        timer = newTimer
         Task { await refreshAll() }
+    }
+
+    /// 메뉴막대 앱은 대부분 화면에 보이지 않아 App Nap에 들어가고, 타이머가 크게 지연돼
+    /// iPhone·Watch에 "1시간 전" 같은 오래된 값이 남는다. 시스템 잠자기는 허용하되 App Nap만 막는다.
+    private func preventAppNap() {
+        appNapActivity = ProcessInfo.processInfo.beginActivity(
+            options: [.userInitiatedAllowingIdleSystemSleep],
+            reason: "QuotaBar 사용량 주기 갱신")
+    }
+
+    /// 잠자기에서 깨면 타이머를 기다리지 않고 즉시 갱신해 기기들이 최신 값을 받게 한다.
+    private func observeWake() {
+        let center = NSWorkspace.shared.notificationCenter
+        for name in [NSWorkspace.didWakeNotification, NSWorkspace.screensDidWakeNotification] {
+            wakeObservers.append(center.addObserver(forName: name, object: nil, queue: .main) { [weak self] _ in
+                Task { @MainActor [weak self] in
+                    guard let self else { return }
+                    // 네트워크가 올라올 시간을 잠깐 준다. 직전 갱신이 방금이면 건너뛴다.
+                    try? await Task.sleep(nanoseconds: 3_000_000_000)
+                    if let last = self.lastRefreshAt, Date().timeIntervalSince(last) < 30 { return }
+                    await self.refreshAll()
+                }
+            })
+        }
     }
 
     private var refreshInterval: TimeInterval {

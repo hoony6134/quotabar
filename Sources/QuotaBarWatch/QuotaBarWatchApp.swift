@@ -1,5 +1,6 @@
 import SwiftUI
 import WidgetKit
+import WatchKit
 
 @main
 struct QuotaBarWatchApp: App {
@@ -11,8 +12,17 @@ struct QuotaBarWatchApp: App {
             WatchRootView()
                 .environmentObject(model)
                 .onChange(of: scenePhase) { _, phase in
-                    if phase == .active { model.reload() }
+                    switch phase {
+                    case .active: model.reload()
+                    case .background: WatchMirrorModel.scheduleBackgroundRefresh()
+                    default: break
+                    }
                 }
+        }
+        // 앱이 꺼져 있어도 watchOS가 주기적으로 깨워 주는 백그라운드 갱신 —
+        // iCloud 값을 당겨와 컴플리케이션을 최신으로 만든다.
+        .backgroundTask(.appRefresh(WatchMirrorModel.refreshTaskID)) {
+            await WatchMirrorModel.performBackgroundSync()
         }
     }
 }
@@ -32,12 +42,52 @@ final class WatchMirrorModel: ObservableObject {
 
     private var observer: NSObjectProtocol?
 
+    static let refreshTaskID = "quotabar.watch.sync"
+
     init() {
         demoMode = UserDefaults.standard.bool(forKey: "demoMode")
         observer = QuotaCloudSync.observeChanges { [weak self] in
             Task { @MainActor in self?.reload() }
         }
+        // iPhone이 직접 밀어 주는 최신 스냅샷 — iCloud보다 빠르고 워치가 단독이어도 무해하다.
+        PhoneWatchBridge.shared.onSnapshot = { snapshot in
+            Task { @MainActor in Self.adopt(snapshot) }
+        }
+        Self.current = self
+        PhoneWatchBridge.shared.activate()
         reload()
+    }
+
+    /// iPhone에서 받은 스냅샷이 현재 것보다 새로우면 앱 그룹 파일에 저장해
+    /// 앱 화면과 컴플리케이션이 함께 쓰게 하고, 화면이 열려 있으면 즉시 갱신한다.
+    private static var current: WatchMirrorModel?
+    private static func adopt(_ snapshot: WidgetSnapshot) {
+        guard snapshot.isDemo != true,
+              snapshot.generatedAt > (WidgetSnapshot.load()?.generatedAt ?? .distantPast) else { return }
+        snapshot.writeToGroupFiles()
+        current?.reload()
+        if current == nil { WidgetCenter.shared.reloadAllTimelines() }
+    }
+
+    // MARK: 백그라운드 갱신
+
+    /// 다음 백그라운드 갱신을 예약한다 (실행 시점은 watchOS가 예산에 맞춰 정한다).
+    static func scheduleBackgroundRefresh() {
+        WKApplication.shared().scheduleBackgroundRefresh(
+            withPreferredDate: Date().addingTimeInterval(15 * 60),
+            userInfo: refreshTaskID as NSString,
+            scheduledCompletion: { _ in })
+    }
+
+    /// 백그라운드에서 iCloud 값을 당겨와 컴플리케이션을 갱신하고 다음 실행을 예약한다.
+    static func performBackgroundSync() async {
+        scheduleBackgroundRefresh()
+        PhoneWatchBridge.shared.activate()
+        if let cloud = await QuotaCloudSync.pull(),
+           cloud.generatedAt > (WidgetSnapshot.loadFromGroupFile()?.generatedAt ?? .distantPast) {
+            cloud.writeToGroupFiles()
+        }
+        WidgetCenter.shared.reloadAllTimelines()
     }
 
     func reload() {

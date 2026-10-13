@@ -115,6 +115,11 @@ targets:
           UIApplicationSupportsMultipleScenes: false
         # 표준 암호화만 사용(HTTPS/iCloud) — 수출 규정 문답 생략
         ITSAppUsesNonExemptEncryption: false
+        # 앱을 열지 않아도 iCloud 값을 당겨와 위젯·Apple Watch를 갱신하는 백그라운드 갱신
+        UIBackgroundModes:
+          - fetch
+        BGTaskSchedulerPermittedIdentifiers:
+          - com.wevoid.quotabar.refresh
     entitlements:
       path: Config/iOS/QuotaBarMobile.entitlements
       properties:
@@ -189,6 +194,9 @@ targets:
     entitlements:
       path: Config/watchOS/QuotaBarWatch.entitlements
       properties:
+        # 앱이 iPhone/iCloud에서 받은 최신 스냅샷을 컴플리케이션과 공유
+        com.apple.security.application-groups:
+          - group.com.wevoid.quotabar
         com.apple.developer.ubiquity-kvstore-identifier: $(TeamIdentifierPrefix)com.wevoid.quotabar
     settings:
       base:
@@ -219,6 +227,9 @@ targets:
     entitlements:
       path: Config/watchOS/QuotaBarWatchWidget.entitlements
       properties:
+        # 앱이 iPhone/iCloud에서 받은 최신 스냅샷을 컴플리케이션과 공유
+        com.apple.security.application-groups:
+          - group.com.wevoid.quotabar
         com.apple.developer.ubiquity-kvstore-identifier: $(TeamIdentifierPrefix)com.wevoid.quotabar
     settings:
       base:

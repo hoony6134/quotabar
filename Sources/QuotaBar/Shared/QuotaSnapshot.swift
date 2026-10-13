@@ -146,6 +146,8 @@ struct WidgetSnapshot: Codable {
     static func load() -> WidgetSnapshot? {
         let file = loadFromGroupFile()
         #if os(iOS) || os(watchOS)
+        // 위젯/컴플리케이션 프로세스는 오래 살아 있으면 로컬 KVS 캐시가 낡을 수 있어 읽기 전에 당겨온다.
+        QuotaCloudSync.synchronize()
         let cloud = QuotaCloudSync.readSnapshot()
         if let cloud, cloud.generatedAt > (file?.generatedAt ?? .distantPast) { return cloud }
         #endif

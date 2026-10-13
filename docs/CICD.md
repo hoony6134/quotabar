@@ -8,7 +8,7 @@
 
 ## 릴리스 방법
 ```bash
-git tag v2.0.0 && git push origin v2.0.0
+git tag v2.1.0 && git push origin v2.1.0
 ```
 버전은 태그에서, 빌드 번호는 Actions 실행 번호에서 가져온다. 수동 실행(workflow_dispatch)은 Release를 만들지 않고 공증된 DMG를 아티팩트로만 남긴다.
 

@@ -16,8 +16,8 @@ settings:
   base:
     SWIFT_VERSION: "5.9"
     CODE_SIGN_STYLE: Automatic
-    MARKETING_VERSION: "2.0.0"
-    CURRENT_PROJECT_VERSION: "8"
+    MARKETING_VERSION: "2.1.0"
+    CURRENT_PROJECT_VERSION: "9"
 
 targets:
   # ───────────────────────── macOS (Developer ID 직접 배포) ─────────────────────────
@@ -32,8 +32,8 @@ targets:
       path: Config/QuotaBarApp-Info.plist
       properties:
         CFBundleDisplayName: QuotaBar
-        CFBundleShortVersionString: "2.0.0"
-        CFBundleVersion: "8"
+        CFBundleShortVersionString: "2.1.0"
+        CFBundleVersion: "9"
         CFBundleIconFile: AppIcon
         LSApplicationCategoryType: public.app-category.developer-tools
         LSMinimumSystemVersion: "14.0"
@@ -68,8 +68,8 @@ targets:
       path: Config/QuotaBarWidget-Info.plist
       properties:
         CFBundleDisplayName: QuotaBar 위젯
-        CFBundleShortVersionString: "2.0.0"
-        CFBundleVersion: "8"
+        CFBundleShortVersionString: "2.1.0"
+        CFBundleVersion: "9"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
     entitlements:
@@ -98,8 +98,8 @@ targets:
       path: Config/iOS/QuotaBarMobile-Info.plist
       properties:
         CFBundleDisplayName: QuotaBar
-        CFBundleShortVersionString: "2.0.0"
-        CFBundleVersion: "8"
+        CFBundleShortVersionString: "2.1.0"
+        CFBundleVersion: "9"
         LSApplicationCategoryType: public.app-category.utilities
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
@@ -115,6 +115,11 @@ targets:
           UIApplicationSupportsMultipleScenes: false
         # 표준 암호화만 사용(HTTPS/iCloud) — 수출 규정 문답 생략
         ITSAppUsesNonExemptEncryption: false
+        # 앱을 열지 않아도 iCloud 값을 당겨와 위젯·Apple Watch를 갱신하는 백그라운드 갱신
+        UIBackgroundModes:
+          - fetch
+        BGTaskSchedulerPermittedIdentifiers:
+          - com.wevoid.quotabar.refresh
     entitlements:
       path: Config/iOS/QuotaBarMobile.entitlements
       properties:
@@ -149,8 +154,8 @@ targets:
       path: Config/iOS/QuotaBarMobileWidget-Info.plist
       properties:
         CFBundleDisplayName: QuotaBar
-        CFBundleShortVersionString: "2.0.0"
-        CFBundleVersion: "8"
+        CFBundleShortVersionString: "2.1.0"
+        CFBundleVersion: "9"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
     entitlements:
@@ -180,8 +185,8 @@ targets:
       path: Config/watchOS/QuotaBarWatch-Info.plist
       properties:
         CFBundleDisplayName: QuotaBar
-        CFBundleShortVersionString: "2.0.0"
-        CFBundleVersion: "8"
+        CFBundleShortVersionString: "2.1.0"
+        CFBundleVersion: "9"
         # iPhone 앱 없이도 설치·동작하는 독립 Watch 앱 (iCloud KVS를 직접 읽는다)
         WKApplication: true
         WKCompanionAppBundleIdentifier: com.wevoid.quotabar.mobile
@@ -212,8 +217,8 @@ targets:
       path: Config/watchOS/QuotaBarWatchWidget-Info.plist
       properties:
         CFBundleDisplayName: QuotaBar
-        CFBundleShortVersionString: "2.0.0"
-        CFBundleVersion: "8"
+        CFBundleShortVersionString: "2.1.0"
+        CFBundleVersion: "9"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
     entitlements:

@@ -58,6 +58,8 @@ enum QuotaWidgetShared {
     static let kvsSnapshotKey = "quotabar.snapshot.v2"
     /// iPhone → Mac 새로고침 요청 (타임스탬프). Mac이 감시한다.
     static let kvsRefreshRequestKey = "quotabar.refreshRequest.v2"
+    /// Watch 앱이 iPhone에서 직접 받은 스냅샷을 컴플리케이션과 나누는 키 (Mac은 쓰지 않는다).
+    static let kvsRelayKey = "quotabar.snapshot.relay.v2"
 }
 
 struct WidgetQuotaItem: Codable, Identifiable, Hashable {
@@ -144,12 +146,18 @@ struct WidgetSnapshot: Codable {
     /// 위젯/앱이 쓰는 통합 로더: 앱 그룹 파일과 iCloud KVS 중 더 최신 것을 쓴다.
     /// (macOS 위젯은 KVS entitlement가 없으므로 파일만 본다.)
     static func load() -> WidgetSnapshot? {
-        let file = loadFromGroupFile()
+        var best = loadFromGroupFile()
         #if os(iOS) || os(watchOS)
-        let cloud = QuotaCloudSync.readSnapshot()
-        if let cloud, cloud.generatedAt > (file?.generatedAt ?? .distantPast) { return cloud }
+        // 위젯/컴플리케이션 프로세스는 오래 살아 있으면 로컬 KVS 캐시가 낡을 수 있어 읽기 전에 당겨온다.
+        QuotaCloudSync.synchronize()
+        // watchOS는 앱 그룹 없이 앱↔컴플리케이션이 KVS만 공유한다(릴레이 키: iPhone이 직접 보낸 값).
+        for candidate in [QuotaCloudSync.readSnapshot(), QuotaCloudSync.readRelay()] {
+            if let candidate, candidate.generatedAt > (best?.generatedAt ?? .distantPast) {
+                best = candidate
+            }
+        }
         #endif
-        return file
+        return best
     }
 
     var worstPercent: Double { items.map(\.percent).max() ?? 0 }

@@ -18,6 +18,18 @@ enum QuotaCloudSync {
         return WidgetSnapshot.decode(data)
     }
 
+    static func readRelay() -> WidgetSnapshot? {
+        guard let data = store.data(forKey: QuotaWidgetShared.kvsRelayKey) else { return nil }
+        return WidgetSnapshot.decode(data)
+    }
+
+    /// Watch 앱 → 컴플리케이션 전달용. 앱 그룹 entitlement 없이 같은 기기의 두 프로세스가 값을 나눈다.
+    static func writeRelay(_ snapshot: WidgetSnapshot) {
+        guard let data = snapshot.encoded(), data.count < 900_000 else { return }
+        store.set(data, forKey: QuotaWidgetShared.kvsRelayKey)
+        store.synchronize()
+    }
+
     static var refreshRequestDate: Date? {
         let t = store.double(forKey: QuotaWidgetShared.kvsRefreshRequestKey)
         return t > 0 ? Date(timeIntervalSince1970: t) : nil
@@ -28,8 +40,10 @@ enum QuotaCloudSync {
     private static var lastWrittenDigest: Data?
     private static var lastWrittenAt: Date?
 
-    /// 내용이 바뀌었거나 5분 이상 지났을 때만 쓰고, 강제가 아니면 30초 이내 재기록은 건너뛴다
+    /// 내용이 바뀌었거나 2분 이상 지났을 때만 쓰고, 강제가 아니면 30초 이내 재기록은 건너뛴다
     /// (KVS는 쓰기 빈도 제한이 있고, 앱 상태 저장은 갱신 중 여러 번 일어난다).
+    /// 값이 같아도 주기적으로 쓰는 이유: generatedAt이 "마지막으로 Mac이 살아 있던 시각"이라
+    /// 기기들이 "n분 전"을 정확히 표시하려면 하트비트가 필요하다.
     /// - Returns: 실제로 썼는지
     @discardableResult
     static func writeSnapshot(_ snapshot: WidgetSnapshot, force: Bool = false) -> Bool {
@@ -38,7 +52,7 @@ enum QuotaCloudSync {
         comparable.generatedAt = .distantPast
         let digest = comparable.encoded()
         let since = lastWrittenAt.map { Date().timeIntervalSince($0) } ?? .infinity
-        guard force || (since > 30 && (since > 300 || digest != lastWrittenDigest)) else { return false }
+        guard force || (since > 30 && (since > 120 || digest != lastWrittenDigest)) else { return false }
         guard let data = snapshot.encoded(), data.count < 900_000 else { return false }
         store.set(data, forKey: QuotaWidgetShared.kvsSnapshotKey)
         store.synchronize()
@@ -56,6 +70,20 @@ enum QuotaCloudSync {
     // MARK: 변경 감시
 
     static func synchronize() { store.synchronize() }
+
+    /// iCloud에서 최신 값을 당겨오고, 더 새로운 스냅샷이 도착하면 바로 돌려준다.
+    /// 백그라운드 갱신처럼 "외부 변경 알림"을 기다릴 수 없는 곳에서 쓴다.
+    /// KVS 반영은 비동기라 `timeout`초 안에 새 값이 없으면 현재 값을 그대로 돌려준다.
+    static func pull(timeout: TimeInterval = 4) async -> WidgetSnapshot? {
+        let before = readSnapshot()?.generatedAt
+        store.synchronize()
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            try? await Task.sleep(nanoseconds: 250_000_000)
+            if let current = readSnapshot(), current.generatedAt != before { return current }
+        }
+        return readSnapshot()
+    }
 
     /// 다른 기기에서 값이 바뀌면 호출된다. 반환된 토큰은 호출자가 보관한다.
     static func observeChanges(_ handler: @escaping @Sendable () -> Void) -> NSObjectProtocol {

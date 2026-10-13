@@ -34,8 +34,8 @@ struct WatchQuotaProvider: TimelineProvider {
         for date in Array(Set(upcoming)).sorted().prefix(6) {
             entries.append(WatchQuotaEntry(date: date.addingTimeInterval(1), snapshot: snapshot))
         }
-        // 워치 위젯은 갱신 예산이 작으므로 30분 간격으로 다시 읽는다.
-        completion(Timeline(entries: entries, policy: .after(now.addingTimeInterval(30 * 60))))
+        // 워치 앱이 iPhone/iCloud에서 받으면 바로 reload되고, 아니어도 15분마다 다시 읽는다.
+        completion(Timeline(entries: entries, policy: .after(now.addingTimeInterval(15 * 60))))
     }
 }
 

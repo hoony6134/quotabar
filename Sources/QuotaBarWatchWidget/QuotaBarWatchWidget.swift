@@ -4,47 +4,20 @@ import AppIntents
 
 // MARK: - 구성 (표시할 쿼터 선택)
 
-/// 컴플리케이션 편집 UI에 나오는 쿼터 항목. id = "<accountID>::<quotaKey>" (스냅샷과 동일)
-struct WatchQuotaItemEntity: AppEntity {
-    static var typeDisplayRepresentation: TypeDisplayRepresentation = "쿼터"
-    static var defaultQuery = WatchQuotaItemQuery()
-
-    var id: String
-    var title: String
-    var subtitle: String
-
-    var displayRepresentation: DisplayRepresentation {
-        DisplayRepresentation(title: "\(title)", subtitle: "\(subtitle)")
-    }
-}
-
-struct WatchQuotaItemQuery: EntityQuery {
-    func entities(for identifiers: [String]) async throws -> [WatchQuotaItemEntity] {
-        let all = Self.allEntities()
-        // 스냅샷에 아직 없는 항목도 선택값은 보존한다
-        return identifiers.map { id in
-            all.first { $0.id == id }
-                ?? WatchQuotaItemEntity(id: id, title: "알 수 없는 쿼터", subtitle: "")
-        }
-    }
-
-    func suggestedEntities() async throws -> [WatchQuotaItemEntity] {
-        Self.allEntities()
-    }
-
-    static func allEntities() -> [WatchQuotaItemEntity] {
-        (WidgetSnapshot.load()?.items ?? []).map {
-            WatchQuotaItemEntity(id: $0.id, title: "\($0.service) · \($0.name)", subtitle: $0.label)
-        }
-    }
-}
-
+/// 컴플리케이션 구성. watchOS는 파라미터 편집 UI가 없어 recommendations()로만 값이 정해진다.
+/// AppEntity 파라미터를 추천에 넣으면 WidgetKit이 추천을 만들다가 익스텐션이 크래시하므로(→ 위젯 전체가 목록에서 사라짐)
+/// 단순 String/Bool 파라미터만 쓴다.
 struct WatchQuotaConfigIntent: WidgetConfigurationIntent {
     static var title: LocalizedStringResource = "QuotaBar 설정"
-    static var description = IntentDescription("컴플리케이션에 표시할 쿼터를 선택합니다. 여러 개를 고르면 번갈아 보여주고, 비워두면 사용률이 가장 높은 항목을 보여줍니다.")
+    static var description = IntentDescription("컴플리케이션에 표시할 쿼터를 선택합니다.")
 
-    @Parameter(title: "표시할 쿼터")
-    var items: [WatchQuotaItemEntity]?
+    /// 표시할 쿼터 id ("<accountID>::<quotaKey>", 스냅샷과 동일). nil이면 가장 높은 사용률.
+    @Parameter(title: "쿼터 ID")
+    var quotaID: String?
+
+    /// 모든 쿼터를 번갈아 표시
+    @Parameter(title: "전체 순환", default: false)
+    var rotateAll: Bool
 }
 
 // MARK: - 타임라인
@@ -109,26 +82,28 @@ struct WatchQuotaProvider: AppIntentTimelineProvider {
     /// watchOS는 페이스 편집에서 인텐트 파라미터를 직접 고르는 UI가 없고, 이 추천 목록만 컴플리케이션 목록에 보여준다.
     /// "가장 높은 사용률"은 별도의 정적 위젯(QuotaBarWatchComplication)이 맡으므로 여기선 항목별 구성만 준다.
     func recommendations() -> [AppIntentRecommendation<WatchQuotaConfigIntent>] {
-        let all = WatchQuotaItemQuery.allEntities()
+        let items = WidgetSnapshot.load()?.items ?? []
         var result: [AppIntentRecommendation<WatchQuotaConfigIntent>] = []
-        if all.count > 1 {
+        if items.count > 1 {
             var intent = WatchQuotaConfigIntent()
-            intent.items = all
+            intent.rotateAll = true
             result.append(AppIntentRecommendation(intent: intent, description: "전체 순환"))
         }
-        for entity in all.prefix(12) {
+        for item in items.prefix(12) {
             var intent = WatchQuotaConfigIntent()
-            intent.items = [entity]
-            result.append(AppIntentRecommendation(intent: intent, description: "\(entity.title)"))
+            intent.quotaID = item.id
+            // 보간(\(...))이 들어간 LocalizedStringResource를 넘기면 WidgetKit이 트랩하므로 완성된 문자열을 키로 넘긴다.
+            let label = "\(item.service) · \(item.name)"
+            result.append(AppIntentRecommendation(intent: intent, description: LocalizedStringResource(stringLiteral: label)))
         }
         return result
     }
 
-    /// 사용자가 고른 항목을 고른 순서대로 (스냅샷에 있는 것만). 선택이 없으면 빈 배열.
+    /// 사용자가 고른 항목 (스냅샷에 있는 것만). 선택이 없으면 빈 배열 → 가장 높은 사용률.
     private static func picked(_ snapshot: WidgetSnapshot, _ configuration: WatchQuotaConfigIntent) -> [WidgetQuotaItem] {
-        guard let selected = configuration.items, !selected.isEmpty else { return [] }
-        let byID = Dictionary(snapshot.items.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
-        return selected.compactMap { byID[$0.id] }
+        if configuration.rotateAll { return snapshot.items }
+        guard let id = configuration.quotaID else { return [] }
+        return snapshot.items.filter { $0.id == id }
     }
 
     /// 해당 시각에 보여줄 항목. 절대 시각 기준 슬롯으로 고르므로 다시 로드돼도 순서가 안정적이다.

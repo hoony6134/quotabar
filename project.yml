@@ -208,6 +208,9 @@ targets:
     sources:
       - path: Sources/QuotaBarWatchWidget
       - path: Sources/QuotaBar/Shared
+      # 서비스 로고 PNG (컴플리케이션 아이콘용)
+      - path: Sources/QuotaBar/Resources/Logos
+        buildPhase: resources
     info:
       path: Config/watchOS/QuotaBarWatchWidget-Info.plist
       properties:

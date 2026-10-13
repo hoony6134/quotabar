@@ -106,12 +106,17 @@ struct WatchQuotaProvider: AppIntentTimelineProvider {
         return Timeline(entries: entries, policy: .after(now.addingTimeInterval(30 * 60)))
     }
 
-    /// watchOS는 설정 가능한 위젯을 이 추천 목록으로만 컴플리케이션 목록에 보여준다.
-    /// 목록이 비면 위젯 자체가 사라지므로(예: iCloud 데이터를 아직 못 읽은 때) 기본 구성을 항상 맨 앞에 둔다.
+    /// watchOS는 페이스 편집에서 인텐트 파라미터를 직접 고르는 UI가 없고, 이 추천 목록만 컴플리케이션 목록에 보여준다.
+    /// "가장 높은 사용률"은 별도의 정적 위젯(QuotaBarWatchComplication)이 맡으므로 여기선 항목별 구성만 준다.
     func recommendations() -> [AppIntentRecommendation<WatchQuotaConfigIntent>] {
-        var result = [AppIntentRecommendation(intent: WatchQuotaConfigIntent(),
-                                              description: "가장 높은 사용률")]
-        for entity in WatchQuotaItemQuery.allEntities().prefix(10) {
+        let all = WatchQuotaItemQuery.allEntities()
+        var result: [AppIntentRecommendation<WatchQuotaConfigIntent>] = []
+        if all.count > 1 {
+            var intent = WatchQuotaConfigIntent()
+            intent.items = all
+            result.append(AppIntentRecommendation(intent: intent, description: "전체 순환"))
+        }
+        for entity in all.prefix(12) {
             var intent = WatchQuotaConfigIntent()
             intent.items = [entity]
             result.append(AppIntentRecommendation(intent: intent, description: "\(entity.title)"))
@@ -138,26 +143,75 @@ struct WatchQuotaProvider: AppIntentTimelineProvider {
     }
 }
 
+// MARK: - 기본(정적) 타임라인 — 가장 높은 사용률
+
+/// 설정 없는 기본 컴플리케이션. 인텐트 구성과 무관하게 항상 컴플리케이션 목록에 나오고,
+/// 기존 페이스에 올려둔 컴플리케이션(같은 kind)도 그대로 살아 있다.
+struct WatchTopQuotaProvider: TimelineProvider {
+    func placeholder(in context: Context) -> WatchQuotaEntry {
+        WatchQuotaEntry(date: Date(), item: WidgetSnapshot.sample.items.first)
+    }
+
+    func getSnapshot(in context: Context, completion: @escaping (WatchQuotaEntry) -> Void) {
+        let pool = context.isPreview ? WidgetSnapshot.sample : (WidgetSnapshot.load() ?? .sample)
+        let now = Date()
+        completion(WatchQuotaEntry(date: now, item: Self.top(pool.items, at: now)))
+    }
+
+    func getTimeline(in context: Context, completion: @escaping (Timeline<WatchQuotaEntry>) -> Void) {
+        let now = Date()
+        let items = WidgetSnapshot.load()?.items ?? []
+        let end = now.addingTimeInterval(WatchQuotaProvider.horizon)
+        var dates: Set<Date> = [now]
+        for reset in items.compactMap(\.resetsAt) where reset > now && reset < end {
+            dates.insert(reset.addingTimeInterval(1))
+        }
+        let entries = dates.sorted().map { WatchQuotaEntry(date: $0, item: Self.top(items, at: $0)) }
+        completion(Timeline(entries: entries, policy: .after(now.addingTimeInterval(30 * 60))))
+    }
+
+    static func top(_ items: [WidgetQuotaItem], at date: Date) -> WidgetQuotaItem? {
+        items.max { $0.effectivePercent(at: date) < $1.effectivePercent(at: date) }
+    }
+}
+
 // MARK: - 위젯 정의
 
 @main
 struct QuotaBarWatchWidgetBundle: WidgetBundle {
     var body: some Widget {
         QuotaBarWatchComplication()
+        QuotaBarWatchPickedComplication()
     }
 }
 
+private let watchFamilies: [WidgetFamily] = [.accessoryCircular, .accessoryCorner, .accessoryRectangular, .accessoryInline]
+
+/// 기본: 가장 높은 사용률 (기존 kind 유지 → 이미 페이스에 올린 컴플리케이션이 깨지지 않는다)
 struct QuotaBarWatchComplication: Widget {
     var body: some WidgetConfiguration {
-        AppIntentConfiguration(kind: "QuotaBarWatchComplication",
+        StaticConfiguration(kind: "QuotaBarWatchComplication", provider: WatchTopQuotaProvider()) { entry in
+            ComplicationView(entry: entry)
+                .containerBackground(.fill.tertiary, for: .widget)
+        }
+        .configurationDisplayName("QuotaBar")
+        .description("가장 사용률이 높은 AI 구독 한도를 보여줍니다.")
+        .supportedFamilies(watchFamilies)
+    }
+}
+
+/// 선택: 특정 한도 하나 또는 전체 순환
+struct QuotaBarWatchPickedComplication: Widget {
+    var body: some WidgetConfiguration {
+        AppIntentConfiguration(kind: "QuotaBarWatchPickedComplication",
                                intent: WatchQuotaConfigIntent.self,
                                provider: WatchQuotaProvider()) { entry in
             ComplicationView(entry: entry)
                 .containerBackground(.fill.tertiary, for: .widget)
         }
-        .configurationDisplayName("QuotaBar")
-        .description("선택한 AI 구독 한도를 보여줍니다. 여러 개를 고르면 번갈아 표시합니다.")
-        .supportedFamilies([.accessoryCircular, .accessoryCorner, .accessoryRectangular, .accessoryInline])
+        .configurationDisplayName("QuotaBar 한도 선택")
+        .description("선택한 AI 구독 한도를 보여줍니다. 전체 순환을 고르면 번갈아 표시합니다.")
+        .supportedFamilies(watchFamilies)
     }
 }
 

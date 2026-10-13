@@ -45,6 +45,8 @@ final class WatchMirrorModel: ObservableObject {
         snapshot = demoMode ? .demo() : WidgetSnapshot.load()
         // 컴플리케이션도 새 값으로 갱신
         WidgetCenter.shared.reloadAllTimelines()
+        // 컴플리케이션 목록의 "한도 선택" 항목도 새 쿼터 목록으로 다시 만든다
+        WidgetCenter.shared.invalidateConfigurationRecommendations()
     }
 
     /// Mac에 갱신을 요청하고 최대 8초 동안 새 값을 기다린다.

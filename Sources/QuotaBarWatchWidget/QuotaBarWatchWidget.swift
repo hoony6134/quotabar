@@ -106,6 +106,15 @@ struct WatchQuotaProvider: AppIntentTimelineProvider {
         return Timeline(entries: entries, policy: .after(now.addingTimeInterval(30 * 60)))
     }
 
+    /// watchOS는 기본 구현이 없어 필수. 위젯 갤러리에 한도별 추천 구성을 보여준다.
+    func recommendations() -> [AppIntentRecommendation<WatchQuotaConfigIntent>] {
+        WatchQuotaItemQuery.allEntities().prefix(10).map { entity in
+            var intent = WatchQuotaConfigIntent()
+            intent.items = [entity]
+            return AppIntentRecommendation(intent: intent, description: "\(entity.title)")
+        }
+    }
+
     /// 사용자가 고른 항목을 고른 순서대로 (스냅샷에 있는 것만). 선택이 없으면 빈 배열.
     private static func picked(_ snapshot: WidgetSnapshot, _ configuration: WatchQuotaConfigIntent) -> [WidgetQuotaItem] {
         guard let selected = configuration.items, !selected.isEmpty else { return [] }

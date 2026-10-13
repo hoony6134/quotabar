@@ -1,4 +1,5 @@
 import SwiftUI
+import WidgetKit
 
 @main
 struct QuotaBarWatchApp: App {
@@ -42,6 +43,8 @@ final class WatchMirrorModel: ObservableObject {
     func reload() {
         QuotaCloudSync.synchronize()
         snapshot = demoMode ? .demo() : WidgetSnapshot.load()
+        // 컴플리케이션도 새 값으로 갱신
+        WidgetCenter.shared.reloadAllTimelines()
     }
 
     /// Mac에 갱신을 요청하고 최대 8초 동안 새 값을 기다린다.

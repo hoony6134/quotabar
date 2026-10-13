@@ -5,7 +5,7 @@ AI 구독 서비스들의 사용량 한도(쿼터)를 한 곳에서 추적하는
 
 ## 2.0 변경점
 
-- **Apple Watch 앱** (`QuotaBarWatch`): iCloud 미러를 직접 읽어 가장 높은 사용률 링·서비스별 한도·리셋 시각을 손목에서 확인하고 Mac에 새로고침을 요청할 수 있다. iPhone 앱에 포함되어 배포된다.
+- **Apple Watch 앱** (`QuotaBarWatch`): iCloud 미러를 직접 읽어 가장 높은 사용률 링·서비스별 한도·리셋 시각을 손목에서 확인하고 Mac에 새로고침을 요청할 수 있다. 홈 화면용 **컴플리케이션**(원형·코너·직사각형·인라인)도 제공한다. iPhone 앱에 포함되어 배포된다.
 - **iPhone 앱 + 위젯** (`QuotaBarMobile`): Mac이 조회한 사용률을 iCloud(키-값 저장소)로 미러링. 홈 화면(S/M/L)·잠금 화면(원형/직사각형/인라인) 위젯, 당겨서 새로고침(Mac에 갱신 요청), 데모 모드(App Review/체험용). **토큰은 iPhone으로 가지 않는다.**
 - **조회 방식 최신화** — Claude(추가 윈도우·extra usage·claude.ai 세션 폴백), Codex(`$CODEX_HOME`·JWT 플랜·app-server 폴백), Cursor(`usage-summary`·Cursor.app 로그인 자동 감지), Copilot(에디터 로그인/`gh` 자동 감지), Gemini(Code Assist 서버 잔량 + 로컬 추정). 자세한 내용은 [docs/FETCHING.md](docs/FETCHING.md).
 - **새 디자인** — 단계 색 체계(민트→앰버→오렌지→레드)·링 게이지·요약 히어로·새 앱 아이콘, 위젯 리셋 시각에 맞춘 타임라인.
@@ -47,7 +47,7 @@ xcodegen generate
 open QuotaBar.xcodeproj   # Signing & Capabilities에서 Team 선택 후 Run
 ```
 
-스킴: `QuotaBar`(macOS 앱+위젯), `QuotaBarMobile`(iOS 앱+위젯+Apple Watch 앱), `QuotaBarWatch`(watchOS 앱 단독). 빌드 후 위젯 갤러리에 "QuotaBar" 위젯이 나타난다.
+스킴: `QuotaBar`(macOS 앱+위젯), `QuotaBarMobile`(iOS 앱+위젯+Apple Watch 앱), `QuotaBarWatch`(watchOS 앱+컴플리케이션). 빌드 후 위젯 갤러리에 "QuotaBar" 위젯이 나타난다.
 macOS는 small/medium/large, iOS는 여기에 잠금 화면 위젯(원형·직사각형·인라인)이 추가된다. 표시할 쿼터는 위젯 편집에서 고를 수 있다.
 앱과 위젯은 App Group(`group.com.wevoid.quotabar`)으로 데이터를 공유한다 —
 macOS 15+에서 그룹 ID 검증 문제가 생기면 `Shared/QuotaSnapshot.swift`와 `project.yml` 두 곳의 그룹 ID를
@@ -77,7 +77,7 @@ Mac 앱이 새로고침할 때마다 표시용 스냅샷(사용률·리셋 시�
 
 ### Claude — 자동
 계정 추가 시 **자동 감지** 버튼: Claude Code 자격증명(키체인 `Claude Code-credentials`, `~/.claude/.credentials.json`, `~/.claude.json` 등)에서 OAuth 토큰을 매 갱신마다 다시 찾는다.
-`api.anthropic.com/api/oauth/usage`에서 5시간 세션 / 주간(전체) / 주간(Sonnet) 사용률(%)과 리셋 시각을 받아온다. Opus 별도 한도는 폐지되어 표시하지 않으며, **Max 플랜**에서는 Fable 주간 한도도 함께 표시한다. 플랜은 응답 또는 Claude Code 자격증명의 `subscriptionType`에서 감지한다.
+`api.anthropic.com/api/oauth/usage`에서 5시간 세션 / 주간(전체) / 주간(Sonnet) 사용률(%)과 리셋 시각을 받아온다. Opus 별도 한도는 폐지되어 표시하지 않으며, **Max 플랜**에서는 응답의 `limits[]`(weekly_scoped)에서 Fable 주간 한도도 함께 표시한다. 플랜은 응답 또는 Claude Code 자격증명의 `subscriptionType`에서 감지한다.
 
 **토큰 만료 시 자동 재발급(하이브리드).** Claude Code 토큰은 Claude Code가 실행될 때만 갱신되므로, 앱이 만료(또는 401/403)를 감지하면 다음 순서로 직접 재발급한다:
 1. 저장된 `refreshToken`으로 `console.anthropic.com/v1/oauth/token`에 직접 갱신 요청 (빠르고 쿼터 소모 없음)

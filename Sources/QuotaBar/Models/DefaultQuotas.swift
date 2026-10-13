@@ -2,6 +2,7 @@ import Foundation
 
 /// 서비스별 기본 쿼터 카탈로그 (2026-06 기준 공개 정보).
 /// 정확한 수치는 서비스가 수시로 바꾸므로, 계정 상세 화면에서 자유롭게 수정할 수 있다.
+/// API가 한도(cap)를 직접 알려주는 서비스(Copilot·Cursor 등)는 첫 동기화 때 아래 값이 서버 값으로 덮어써진다.
 enum DefaultQuotas {
 
     static func quotas(for service: ServiceKind) -> [QuotaItem] {

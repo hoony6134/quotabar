@@ -197,6 +197,35 @@ targets:
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         TARGETED_DEVICE_FAMILY: "4"
         GENERATE_INFOPLIST_FILE: NO
+    dependencies:
+      - target: QuotaBarWatchWidget
+        embed: true
+
+  # Apple Watch 컴플리케이션 (watchOS 위젯 익스텐션)
+  QuotaBarWatchWidget:
+    type: app-extension
+    platform: watchOS
+    sources:
+      - path: Sources/QuotaBarWatchWidget
+      - path: Sources/QuotaBar/Shared
+    info:
+      path: Config/watchOS/QuotaBarWatchWidget-Info.plist
+      properties:
+        CFBundleDisplayName: QuotaBar
+        CFBundleShortVersionString: "2.0.0"
+        CFBundleVersion: "8"
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    entitlements:
+      path: Config/watchOS/QuotaBarWatchWidget.entitlements
+      properties:
+        com.apple.developer.ubiquity-kvstore-identifier: $(TeamIdentifierPrefix)com.wevoid.quotabar
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.wevoid.quotabar.mobile.watchkitapp.widget
+        TARGETED_DEVICE_FAMILY: "4"
+        SKIP_INSTALL: true
+        GENERATE_INFOPLIST_FILE: NO
 
 schemes:
   QuotaBar:
@@ -229,6 +258,7 @@ schemes:
     build:
       targets:
         QuotaBarWatch: all
+        QuotaBarWatchWidget: all
     run:
       config: Debug
       executable: QuotaBarWatch

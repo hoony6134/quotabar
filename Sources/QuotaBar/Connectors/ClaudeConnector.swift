@@ -297,19 +297,15 @@ struct ClaudeConnector: QuotaConnector {
         let plan = PlanDetection.from(json: json) ?? fallbackPlan
         var updates: [QuotaUpdate] = []
         // 응답에 있는 윈도우만 반영한다 (플랜에 따라 Sonnet/Fable 윈도우가 없을 수 있음).
-        // Opus 별도 주간 한도는 폐지돼 표시하지 않는다. Fable 주간 한도는 Max 플랜에만 있다.
-        var windows: [(key: String, name: String)] = [
+        // Opus 별도 주간 한도는 폐지돼 표시하지 않는다(레거시 seven_day_opus는 읽지 않음).
+        // Fable 주간 한도는 레거시 키가 아니라 `limits[]`(kind=weekly_scoped)로 오며, 아래에서 따로 처리한다.
+        let windows: [(key: String, name: String)] = [
             ("five_hour", "세션 (5시간)"),
             ("seven_day", "주간 (전체 모델)"),
             ("seven_day_sonnet", "주간 (Sonnet)"),
-        ]
-        if plan == "Max" {
-            windows.append(("seven_day_fable", "주간 (Fable)"))
-        }
-        windows.append(contentsOf: [
             ("seven_day_routines", "주간 (루틴)"),
             ("seven_day_cowork", "주간 (Cowork)"),
-        ])
+        ]
 
         for window in windows {
             // 값이 null이면(해당 윈도우 없음) 건너뛴다.
@@ -319,6 +315,21 @@ struct ClaudeConnector: QuotaConnector {
             updates.append(QuotaUpdate(key: window.key, name: window.name,
                                        used: utilization, cap: 100, unit: "%",
                                        resetsAt: resetsAt, planName: plan))
+        }
+
+        // 모델 한정 주간 한도: Max 플랜의 Fable만 표시한다.
+        // 형태: limits[] = { kind: "weekly_scoped", percent, resets_at, scope: { model: { display_name } } }
+        if plan == "Max", let limits = json["limits"] as? [[String: Any]] {
+            for limit in limits where (limit["kind"] as? String) == "weekly_scoped" {
+                let model = ((limit["scope"] as? [String: Any])?["model"] as? [String: Any])?["display_name"] as? String
+                guard model?.lowercased().contains("fable") == true,
+                      let percent = (limit["percent"] as? NSNumber)?.doubleValue else { continue }
+                updates.append(QuotaUpdate(key: "seven_day_fable", name: "주간 (Fable)",
+                                           used: percent, cap: 100, unit: "%",
+                                           resetsAt: DateParsing.iso8601(limit["resets_at"] as? String),
+                                           planName: plan))
+                break
+            }
         }
 
         // 추가 사용량(Extra usage) — 월 한도 대비 사용률

@@ -23,6 +23,8 @@ jobs:
             destination: platform=macOS
           - scheme: QuotaBarMobile
             destination: generic/platform=iOS
+          - scheme: QuotaBarWatch
+            destination: generic/platform=watchOS
     steps:
       - uses: actions/checkout@v4
 

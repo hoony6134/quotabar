@@ -2,17 +2,18 @@ import Foundation
 
 /// 서비스별 기본 쿼터 카탈로그 (2026-06 기준 공개 정보).
 /// 정확한 수치는 서비스가 수시로 바꾸므로, 계정 상세 화면에서 자유롭게 수정할 수 있다.
+/// API가 한도(cap)를 직접 알려주는 서비스(Copilot·Cursor 등)는 첫 동기화 때 아래 값이 서버 값으로 덮어써진다.
 enum DefaultQuotas {
 
     static func quotas(for service: ServiceKind) -> [QuotaItem] {
         switch service {
 
         case .claude:
-            // /api/oauth/usage 가 utilization(%)만 제공하므로 cap=100(%) 기준
+            // /api/oauth/usage 가 utilization(%)만 제공하므로 cap=100(%) 기준.
+            // Opus 별도 한도는 폐지됐고, Max 플랜의 Fable 주간 한도는 응답에 있을 때만 동적으로 추가된다.
             return [
                 item(key: "five_hour",     name: "세션 (5시간)",      cap: 100, unit: "%", period: .rollingHours(5), api: true),
                 item(key: "seven_day",     name: "주간 (전체 모델)",  cap: 100, unit: "%", period: .rollingDays(7),  api: true),
-                item(key: "seven_day_opus", name: "주간 (Opus)",      cap: 100, unit: "%", period: .rollingDays(7),  api: true),
             ]
 
         case .chatgpt:

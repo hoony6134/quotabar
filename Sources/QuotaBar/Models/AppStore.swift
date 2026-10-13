@@ -351,8 +351,24 @@ final class AppStore: ObservableObject {
                 accounts[ai].detectedPlanName = planName
             }
         }
+        pruneRetiredQuotas(accountIndex: ai, updates: updates)
         accounts[ai].lastSyncError = nil
         accounts[ai].lastSyncAt = now
+    }
+
+    /// 서비스가 더 이상 내려주지 않는 동적 한도(예: 폐지된 Opus 주간, 사라진 Sonnet/Fable)를 지운다.
+    /// Claude는 응답에 있는 윈도우만 신뢰할 수 있어서, 기본 카탈로그에 없는 `seven_day_*`·
+    /// `extra_usage`가 이번 응답에 없으면 옛 값이 남지 않도록 제거한다.
+    private func pruneRetiredQuotas(accountIndex ai: Int, updates: [QuotaUpdate]) {
+        guard accounts[ai].service == .claude else { return }
+        let returned = Set(updates.map(\.key))
+        let defaults = Set(DefaultQuotas.quotas(for: .claude).map(\.def.key))
+        accounts[ai].quotas.removeAll { quota in
+            let key = quota.def.key
+            guard !defaults.contains(key), quota.def.apiSynced else { return false }
+            let dynamic = key.hasPrefix("seven_day_") || key == "extra_usage"
+            return dynamic && (key.contains("opus") || !returned.contains(key))
+        }
     }
 
     private static func inferredPeriod(service: ServiceKind, key: String) -> ResetPeriod {
@@ -386,7 +402,7 @@ final class AppStore: ObservableObject {
         for ai in accounts.indices {
             // 폐지된 한도 / 예전 버전이 하드코딩해 둔 플랜명 정리
             if accounts[ai].service == .claude {
-                accounts[ai].quotas.removeAll { $0.def.key == "seven_day_opus" }
+                accounts[ai].quotas.removeAll { $0.def.key.lowercased().contains("opus") }
             }
             if accounts[ai].service == .antigravity
                 || (accounts[ai].service == .googleAI && accounts[ai].detectedPlanName == "AI Pro") {

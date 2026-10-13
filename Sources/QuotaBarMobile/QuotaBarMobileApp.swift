@@ -39,6 +39,19 @@ final class MirrorModel: ObservableObject {
         }
     }
     @Published private(set) var isRefreshing = false
+    /// 리셋 알림 (기본 꺼짐). 켜면 권한을 요청하고 스냅샷의 리셋 시각으로 예약한다.
+    @Published var resetNotifications: Bool {
+        didSet {
+            UserDefaults.standard.set(resetNotifications, forKey: MobileNotifications.enabledKey)
+            Task { @MainActor in
+                if resetNotifications, await !MobileNotifications.shared.requestAuthorization() {
+                    resetNotifications = false
+                    return
+                }
+                await MobileNotifications.shared.reschedule(for: snapshot)
+            }
+        }
+    }
 
     private var observer: NSObjectProtocol?
 
@@ -46,6 +59,8 @@ final class MirrorModel: ObservableObject {
 
     init() {
         demoMode = UserDefaults.standard.bool(forKey: "demoMode")
+        resetNotifications = MobileNotifications.isEnabled
+        MobileNotifications.shared.install()
         observer = QuotaCloudSync.observeChanges { [weak self] in
             Task { @MainActor in self?.reload() }
         }
@@ -67,6 +82,8 @@ final class MirrorModel: ObservableObject {
             }
         }
         WidgetCenter.shared.reloadAllTimelines()
+        let current = snapshot
+        Task { await MobileNotifications.shared.reschedule(for: current) }
     }
 
     // MARK: 백그라운드 갱신
@@ -87,6 +104,7 @@ final class MirrorModel: ObservableObject {
         snapshot.writeToGroupFiles()
         PhoneWatchBridge.shared.push(snapshot)
         WidgetCenter.shared.reloadAllTimelines()
+        await MobileNotifications.shared.reschedule(for: snapshot)
     }
 
     /// 당겨서 새로고침: Mac에 갱신을 요청하고 잠시 뒤 미러 값을 다시 읽는다.

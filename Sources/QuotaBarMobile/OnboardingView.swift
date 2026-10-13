@@ -92,6 +92,12 @@ struct SettingsView: View {
                     Text("Mac 없이 앱과 위젯의 모습을 미리 볼 수 있습니다.")
                 }
 
+                Section {
+                    Toggle("리셋 알림", isOn: $model.resetNotifications)
+                } footer: {
+                    Text("쿼터가 초기화되는 시각에 알려 줍니다. Apple Watch로도 전달됩니다.")
+                }
+
                 if let snapshot = model.snapshot, snapshot.isDemo != true {
                     Section("연결된 Mac") {
                         LabeledContent("기기", value: snapshot.deviceName ?? "Mac")

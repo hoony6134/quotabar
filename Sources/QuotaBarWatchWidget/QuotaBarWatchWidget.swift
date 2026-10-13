@@ -88,7 +88,7 @@ struct WatchQuotaProvider: AppIntentTimelineProvider {
         if picked.count > 1 {
             let step = Self.rotationInterval
             var t = (floor(now.timeIntervalSince1970 / step) + 1) * step
-            while t < end {
+            while t < end.timeIntervalSince1970 {
                 dates.insert(Date(timeIntervalSince1970: t))
                 t += step
             }

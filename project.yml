@@ -172,6 +172,8 @@ targets:
     platform: watchOS
     sources:
       - path: Sources/QuotaBarWatch
+      # 컴플리케이션 구성 인텐트는 앱에도 있어야 시스템이 구성을 해석한다
+      - path: Sources/QuotaBarWatchWidget/WatchQuotaConfigIntent.swift
       # 스냅샷 모델/테마/iCloud 동기화는 앱·위젯·iOS와 공유
       - path: Sources/QuotaBar/Shared
       - path: Sources/QuotaBar/Resources/Logos

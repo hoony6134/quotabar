@@ -3,7 +3,7 @@ import LocalAuthentication
 import Security
 
 /// Claude (Pro/Max) — Claude Code가 쓰는 OAuth usage 엔드포인트에서
-/// 5시간 세션 / 7일 / 7일(Opus) 사용률(%)을 가져온다. 비공식 엔드포인트.
+/// 5시간 세션 / 7일 / 7일(Sonnet·Max 플랜의 Fable 등) 사용률(%)을 가져온다. 비공식 엔드포인트.
 ///
 /// 인증 모드 두 가지:
 /// 1. `auto:claude-code` 센티널 — 매 갱신마다 Claude Code 자격증명을 실시간으로
@@ -33,6 +33,8 @@ struct ClaudeConnector: QuotaConnector {
         var refreshToken: String?
         var expiresAt: Date?
         var source: Source?
+        /// 자격증명 JSON의 `subscriptionType` (예: "max", "pro") — 사용량 응답에 플랜이 없을 때의 감지 근거.
+        var subscriptionType: String?
     }
 
     func fetch(credential: String) async throws -> [QuotaUpdate] {
@@ -48,13 +50,15 @@ struct ClaudeConnector: QuotaConnector {
         }
 
         let auto = credential == Self.autoSentinel
+        // 사용량 응답에는 플랜이 없을 수 있어 Claude Code 자격증명의 subscriptionType을 보조로 쓴다.
+        let credentialPlan = auto ? PlanDetection.normalize(Self.detectClaudeCodeCredentials()?.subscriptionType) : nil
         let token = auto ? try await Self.autoAccessToken(forceRefresh: false) : credential
         let result = try await Self.fetchUsage(token: token)
 
         switch result.code {
         case 200:
             Self.rateLimitedUntil = nil
-            return try Self.parseUsage(result.data)
+            return try Self.parseUsage(result.data, fallbackPlan: credentialPlan)
         case 401 where auto, 403 where auto:
             // 토큰이 거부됨 → 강제 재발급(직접 OAuth → claude CLI) 후 1회 재시도.
             let freshToken = try await Self.autoAccessToken(forceRefresh: true)
@@ -68,7 +72,7 @@ struct ClaudeConnector: QuotaConnector {
                 throw ConnectorError.hint("인증 실패(\(retry.code)). 토큰을 재발급했지만 사용량 조회가 거부됐습니다. Claude Code를 한 번 실행해 로그인 상태를 확인하세요.")
             }
             Self.rateLimitedUntil = nil
-            return try Self.parseUsage(retry.data)
+            return try Self.parseUsage(retry.data, fallbackPlan: credentialPlan)
         case 401, 403:
             throw ConnectorError.hint("인증 실패(\(result.code)). 토큰이 만료됐거나 잘못되었습니다. 계정 설정에서 '자동 감지 사용'을 누르면 Claude Code 자격증명을 매번 다시 읽고 만료 시 자동 재발급합니다.")
         case 429:
@@ -285,18 +289,19 @@ struct ClaudeConnector: QuotaConnector {
         return String(output[match])
     }
 
-    private static func parseUsage(_ data: Data) throws -> [QuotaUpdate] {
+    private static func parseUsage(_ data: Data, fallbackPlan: String? = nil) throws -> [QuotaUpdate] {
         guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             throw ConnectorError.schemaChanged("JSON 아님")
         }
 
-        let plan = PlanDetection.from(json: json)
+        let plan = PlanDetection.from(json: json) ?? fallbackPlan
         var updates: [QuotaUpdate] = []
-        // 응답에 있는 윈도우만 반영한다 (플랜에 따라 Opus/Sonnet 윈도우가 없을 수 있음).
+        // 응답에 있는 윈도우만 반영한다 (플랜에 따라 Sonnet/Fable 윈도우가 없을 수 있음).
+        // Opus 별도 주간 한도는 폐지돼 표시하지 않는다(레거시 seven_day_opus는 읽지 않음).
+        // Fable 주간 한도는 레거시 키가 아니라 `limits[]`(kind=weekly_scoped)로 오며, 아래에서 따로 처리한다.
         let windows: [(key: String, name: String)] = [
             ("five_hour", "세션 (5시간)"),
             ("seven_day", "주간 (전체 모델)"),
-            ("seven_day_opus", "주간 (Opus)"),
             ("seven_day_sonnet", "주간 (Sonnet)"),
             ("seven_day_routines", "주간 (루틴)"),
             ("seven_day_cowork", "주간 (Cowork)"),
@@ -310,6 +315,21 @@ struct ClaudeConnector: QuotaConnector {
             updates.append(QuotaUpdate(key: window.key, name: window.name,
                                        used: utilization, cap: 100, unit: "%",
                                        resetsAt: resetsAt, planName: plan))
+        }
+
+        // 모델 한정 주간 한도: Max 플랜의 Fable만 표시한다.
+        // 형태: limits[] = { kind: "weekly_scoped", percent, resets_at, scope: { model: { display_name } } }
+        if plan == "Max", let limits = json["limits"] as? [[String: Any]] {
+            for limit in limits where (limit["kind"] as? String) == "weekly_scoped" {
+                let model = ((limit["scope"] as? [String: Any])?["model"] as? [String: Any])?["display_name"] as? String
+                guard model?.lowercased().contains("fable") == true,
+                      let percent = (limit["percent"] as? NSNumber)?.doubleValue else { continue }
+                updates.append(QuotaUpdate(key: "seven_day_fable", name: "주간 (Fable)",
+                                           used: percent, cap: 100, unit: "%",
+                                           resetsAt: DateParsing.iso8601(limit["resets_at"] as? String),
+                                           planName: plan))
+                break
+            }
         }
 
         // 추가 사용량(Extra usage) — 월 한도 대비 사용률
@@ -698,6 +718,7 @@ struct ClaudeConnector: QuotaConnector {
               !token.isEmpty
         else { return nil }
         let refresh = (oauth["refreshToken"] as? String) ?? (oauth["refresh_token"] as? String)
+        let subscription = (oauth["subscriptionType"] as? String) ?? (oauth["subscription_type"] as? String)
         var expiresAt: Date?
         if let ms = (oauth["expiresAt"] as? NSNumber)?.doubleValue, ms > 0 {
             expiresAt = Date(timeIntervalSince1970: ms / 1000.0)
@@ -705,6 +726,6 @@ struct ClaudeConnector: QuotaConnector {
             expiresAt = Date(timeIntervalSince1970: seconds)
         }
         return Credentials(accessToken: token, refreshToken: refresh,
-                           expiresAt: expiresAt, source: nil)
+                           expiresAt: expiresAt, source: nil, subscriptionType: subscription)
     }
 }

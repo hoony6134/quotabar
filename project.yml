@@ -1,4 +1,4 @@
-# XcodeGen 설정 — macOS 앱 + macOS 위젯 + iOS 앱 + iOS 위젯 (QuotaBar 2.0)
+# XcodeGen 설정 — macOS 앱 + macOS 위젯 + iOS 앱 + iOS 위젯 + Apple Watch 앱 (QuotaBar 2.0)
 # 사용법:
 #   brew install xcodegen   # 없으면
 #   xcodegen generate
@@ -9,6 +9,7 @@ options:
   deploymentTarget:
     macOS: "14.0"
     iOS: "17.0"
+    watchOS: "10.0"
   createIntermediateGroups: true
 
 settings:
@@ -130,6 +131,8 @@ targets:
     dependencies:
       - target: QuotaBarMobileWidget
         embed: true
+      - target: QuotaBarWatch
+        embed: true
 
   QuotaBarMobileWidget:
     type: app-extension
@@ -163,6 +166,67 @@ targets:
         SKIP_INSTALL: true
         GENERATE_INFOPLIST_FILE: NO
 
+  # ───────────────────────── watchOS (iOS 앱에 포함되어 App Store로 배포) ─────────────────────────
+  QuotaBarWatch:
+    type: application
+    platform: watchOS
+    sources:
+      - path: Sources/QuotaBarWatch
+      # 스냅샷 모델/테마/iCloud 동기화는 앱·위젯·iOS와 공유
+      - path: Sources/QuotaBar/Shared
+      - path: Sources/QuotaBar/Resources/Logos
+        buildPhase: resources
+    info:
+      path: Config/watchOS/QuotaBarWatch-Info.plist
+      properties:
+        CFBundleDisplayName: QuotaBar
+        CFBundleShortVersionString: "2.0.0"
+        CFBundleVersion: "8"
+        # iPhone 앱 없이도 설치·동작하는 독립 Watch 앱 (iCloud KVS를 직접 읽는다)
+        WKApplication: true
+        WKCompanionAppBundleIdentifier: com.wevoid.quotabar.mobile
+        ITSAppUsesNonExemptEncryption: false
+    entitlements:
+      path: Config/watchOS/QuotaBarWatch.entitlements
+      properties:
+        com.apple.developer.ubiquity-kvstore-identifier: $(TeamIdentifierPrefix)com.wevoid.quotabar
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.wevoid.quotabar.mobile.watchkitapp
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        TARGETED_DEVICE_FAMILY: "4"
+        GENERATE_INFOPLIST_FILE: NO
+    dependencies:
+      - target: QuotaBarWatchWidget
+        embed: true
+
+  # Apple Watch 컴플리케이션 (watchOS 위젯 익스텐션)
+  QuotaBarWatchWidget:
+    type: app-extension
+    platform: watchOS
+    sources:
+      - path: Sources/QuotaBarWatchWidget
+      - path: Sources/QuotaBar/Shared
+    info:
+      path: Config/watchOS/QuotaBarWatchWidget-Info.plist
+      properties:
+        CFBundleDisplayName: QuotaBar
+        CFBundleShortVersionString: "2.0.0"
+        CFBundleVersion: "8"
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    entitlements:
+      path: Config/watchOS/QuotaBarWatchWidget.entitlements
+      properties:
+        com.apple.developer.ubiquity-kvstore-identifier: $(TeamIdentifierPrefix)com.wevoid.quotabar
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.wevoid.quotabar.mobile.watchkitapp.widget
+        TARGETED_DEVICE_FAMILY: "4"
+        SKIP_INSTALL: true
+        GENERATE_INFOPLIST_FILE: NO
+
 schemes:
   QuotaBar:
     build:
@@ -183,8 +247,18 @@ schemes:
       targets:
         QuotaBarMobile: all
         QuotaBarMobileWidget: all
+        QuotaBarWatch: all
     run:
       config: Debug
       executable: QuotaBarMobile
     archive:
       config: Release
+
+  QuotaBarWatch:
+    build:
+      targets:
+        QuotaBarWatch: all
+        QuotaBarWatchWidget: all
+    run:
+      config: Debug
+      executable: QuotaBarWatch

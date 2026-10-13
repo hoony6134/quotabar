@@ -39,19 +39,18 @@ struct GeminiConnector: QuotaConnector {
         let local = [
             QuotaUpdate(key: "gemini_5h", name: "Gemini 활동 (5시간)",
                         used: fiveHourCount, cap: 100, unit: "회",
-                        resetsAt: now.addingTimeInterval(5 * 3600), planName: "AI Pro"),
+                        resetsAt: now.addingTimeInterval(5 * 3600)),
             QuotaUpdate(key: "gemini_day", name: "Gemini 활동 (오늘)",
                         used: dayCount, cap: 100, unit: "회",
-                        resetsAt: Calendar.current.date(byAdding: .day, value: 1, to: dayStart),
-                        planName: "AI Pro"),
+                        resetsAt: Calendar.current.date(byAdding: .day, value: 1, to: dayStart)),
             QuotaUpdate(key: "gemini_deep_research", name: "Deep Research",
                         used: researchCount, cap: 20, unit: "회",
-                        resetsAt: Calendar.current.date(byAdding: .day, value: 1, to: dayStart),
-                        planName: "AI Pro"),
+                        resetsAt: Calendar.current.date(byAdding: .day, value: 1, to: dayStart)),
         ]
         // 서버 잔량을 읽을 수 있으면 앞에 붙이고, 아니면 로컬 추정만 돌려준다.
+        // 로컬 추정에는 플랜 정보가 없으므로 플랜명은 서버 조회로 감지된 경우에만 표시한다.
         if let remote = await Self.fetchServerQuota(geminiRoot: geminiRoot) {
-            return remote + local.map { $0.withoutPlan() }
+            return remote + local
         }
         return local
     }
@@ -122,13 +121,5 @@ struct GeminiConnector: QuotaConnector {
                                cap: 100, unit: "%", resetsAt: b.reset, planName: plan)
         }
         return updates.isEmpty ? nil : updates
-    }
-}
-
-private extension QuotaUpdate {
-    /// 서버 조회에 성공했을 땐 로컬 추정의 하드코딩 플랜("AI Pro")이 실제 플랜을 덮어쓰지 않게 한다.
-    func withoutPlan() -> QuotaUpdate {
-        QuotaUpdate(key: key, name: name, used: used, cap: cap, unit: unit,
-                    resetsAt: resetsAt, planName: nil)
     }
 }

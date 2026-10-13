@@ -207,9 +207,12 @@ targets:
     platform: watchOS
     sources:
       - path: Sources/QuotaBarWatchWidget
+        excludes:
+          - "Logos/**"
       - path: Sources/QuotaBar/Shared
-      # 서비스 로고 PNG (컴플리케이션 아이콘용)
-      - path: Sources/QuotaBar/Resources/Logos
+      # 서비스 로고 PNG (컴플리케이션 아이콘용). 워치 위젯은 큰 이미지를 넣으면 아카이브에 실패해
+      # placeholder로만 표시되므로 64px로 줄인 사본을 쓴다.
+      - path: Sources/QuotaBarWatchWidget/Logos
         buildPhase: resources
     info:
       path: Config/watchOS/QuotaBarWatchWidget-Info.plist

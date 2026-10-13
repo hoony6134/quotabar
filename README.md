@@ -5,7 +5,7 @@ AI 구독 서비스들의 사용량 한도(쿼터)를 한 곳에서 추적하는
 
 ## 2.0 변경점
 
-- **Apple Watch 앱** (`QuotaBarWatch`): iCloud 미러를 직접 읽어 가장 높은 사용률 링·서비스별 한도·리셋 시각을 손목에서 확인하고 Mac에 새로고침을 요청할 수 있다. 홈 화면용 **컴플리케이션**(원형·코너·직사각형·인라인)도 제공한다. iPhone 앱에 포함되어 배포된다.
+- **Apple Watch 앱** (`QuotaBarWatch`): iCloud 미러를 직접 읽어 가장 높은 사용률 링·서비스별 한도·리셋 시각을 손목에서 확인하고 Mac에 새로고침을 요청할 수 있다. **컴플리케이션**(원형·코너·직사각형·인라인)도 제공한다 — 서비스 로고로 표시되고, 편집에서 표시할 한도를 고를 수 있으며(여러 개를 고르면 5분마다 번갈아 표시, 비우면 가장 높은 사용률) 된다. iPhone 앱에 포함되어 배포된다.
 - **iPhone 앱 + 위젯** (`QuotaBarMobile`): Mac이 조회한 사용률을 iCloud(키-값 저장소)로 미러링. 홈 화면(S/M/L)·잠금 화면(원형/직사각형/인라인) 위젯, 당겨서 새로고침(Mac에 갱신 요청), 데모 모드(App Review/체험용). **토큰은 iPhone으로 가지 않는다.**
 - **조회 방식 최신화** — Claude(추가 윈도우·extra usage·claude.ai 세션 폴백), Codex(`$CODEX_HOME`·JWT 플랜·app-server 폴백), Cursor(`usage-summary`·Cursor.app 로그인 자동 감지), Copilot(에디터 로그인/`gh` 자동 감지), Gemini(Code Assist 서버 잔량 + 로컬 추정). 자세한 내용은 [docs/FETCHING.md](docs/FETCHING.md).
 - **새 디자인** — 단계 색 체계(민트→앰버→오렌지→레드)·링 게이지·요약 히어로·새 앱 아이콘, 위젯 리셋 시각에 맞춘 타임라인.
@@ -35,7 +35,7 @@ swift run
 open build/QuotaBar.app
 ```
 
-Xcode에서 열려면 `Package.swift`를 더블클릭하면 된다.
+Xcode에서 열려면 `Package.swift`를 더블클릭하면 한다.
 
 ### Xcode 프로젝트 (macOS 위젯 + iOS 앱/위젯)
 
@@ -111,7 +111,7 @@ Google이 앱 잔량 API를 공개하지 않아 `~/.gemini` 및 `~/.gemini/antig
 | Antigravity | Agent 활동 | 100회 | 5시간/일간 |
 | Antigravity | Agent 활동 | 1,000회 | 월간 |
 
-한도 수치는 2026년 6월 공개 정보 기준이며 서비스가 수시로 변경하므로, 계정 카드의 ⚙︎ → 한도 편집에서 맞춰 쓰면 된다.
+한도 수치는 2026년 6월 공개 정보 기준이며 서비스가 수시로 변경하므로, 계정 카드의 ⚙︎ → 한도 편집에서 맞춰 쓰면 한다.
 
 ### 배포
 

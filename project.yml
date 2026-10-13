@@ -194,9 +194,6 @@ targets:
     entitlements:
       path: Config/watchOS/QuotaBarWatch.entitlements
       properties:
-        # 앱이 iPhone/iCloud에서 받은 최신 스냅샷을 컴플리케이션과 공유
-        com.apple.security.application-groups:
-          - group.com.wevoid.quotabar
         com.apple.developer.ubiquity-kvstore-identifier: $(TeamIdentifierPrefix)com.wevoid.quotabar
     settings:
       base:
@@ -227,9 +224,6 @@ targets:
     entitlements:
       path: Config/watchOS/QuotaBarWatchWidget.entitlements
       properties:
-        # 앱이 iPhone/iCloud에서 받은 최신 스냅샷을 컴플리케이션과 공유
-        com.apple.security.application-groups:
-          - group.com.wevoid.quotabar
         com.apple.developer.ubiquity-kvstore-identifier: $(TeamIdentifierPrefix)com.wevoid.quotabar
     settings:
       base:

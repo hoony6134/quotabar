@@ -18,6 +18,18 @@ enum QuotaCloudSync {
         return WidgetSnapshot.decode(data)
     }
 
+    static func readRelay() -> WidgetSnapshot? {
+        guard let data = store.data(forKey: QuotaWidgetShared.kvsRelayKey) else { return nil }
+        return WidgetSnapshot.decode(data)
+    }
+
+    /// Watch 앱 → 컴플리케이션 전달용. 앱 그룹 entitlement 없이 같은 기기의 두 프로세스가 값을 나눈다.
+    static func writeRelay(_ snapshot: WidgetSnapshot) {
+        guard let data = snapshot.encoded(), data.count < 900_000 else { return }
+        store.set(data, forKey: QuotaWidgetShared.kvsRelayKey)
+        store.synchronize()
+    }
+
     static var refreshRequestDate: Date? {
         let t = store.double(forKey: QuotaWidgetShared.kvsRefreshRequestKey)
         return t > 0 ? Date(timeIntervalSince1970: t) : nil

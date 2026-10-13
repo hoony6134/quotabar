@@ -58,13 +58,13 @@ final class WatchMirrorModel: ObservableObject {
         reload()
     }
 
-    /// iPhone에서 받은 스냅샷이 현재 것보다 새로우면 앱 그룹 파일에 저장해
+    /// iPhone에서 받은 스냅샷이 현재 것보다 새로우면 KVS 릴레이 키에 저장해
     /// 앱 화면과 컴플리케이션이 함께 쓰게 하고, 화면이 열려 있으면 즉시 갱신한다.
     private static var current: WatchMirrorModel?
     private static func adopt(_ snapshot: WidgetSnapshot) {
         guard snapshot.isDemo != true,
               snapshot.generatedAt > (WidgetSnapshot.load()?.generatedAt ?? .distantPast) else { return }
-        snapshot.writeToGroupFiles()
+        QuotaCloudSync.writeRelay(snapshot)
         current?.reload()
         if current == nil { WidgetCenter.shared.reloadAllTimelines() }
     }
@@ -83,10 +83,7 @@ final class WatchMirrorModel: ObservableObject {
     static func performBackgroundSync() async {
         scheduleBackgroundRefresh()
         PhoneWatchBridge.shared.activate()
-        if let cloud = await QuotaCloudSync.pull(),
-           cloud.generatedAt > (WidgetSnapshot.loadFromGroupFile()?.generatedAt ?? .distantPast) {
-            cloud.writeToGroupFiles()
-        }
+        _ = await QuotaCloudSync.pull()
         WidgetCenter.shared.reloadAllTimelines()
     }
 

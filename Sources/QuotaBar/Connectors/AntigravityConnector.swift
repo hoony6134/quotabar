@@ -29,15 +29,13 @@ struct AntigravityConnector: QuotaConnector {
         return [
             QuotaUpdate(key: "antigravity_5h", name: "Agent 활동 (5시간)",
                         used: fiveHourCount, cap: 100, unit: "회",
-                        resetsAt: now.addingTimeInterval(5 * 3600), planName: "AI Pro"),
+                        resetsAt: now.addingTimeInterval(5 * 3600)),
             QuotaUpdate(key: "antigravity_day", name: "Agent 활동 (오늘)",
                         used: dayCount, cap: 100, unit: "회",
-                        resetsAt: Calendar.current.date(byAdding: .day, value: 1, to: dayStart),
-                        planName: "AI Pro"),
+                        resetsAt: Calendar.current.date(byAdding: .day, value: 1, to: dayStart)),
             QuotaUpdate(key: "antigravity_month", name: "Agent 활동 (월간)",
                         used: monthCount, cap: 1000, unit: "회",
-                        resetsAt: Calendar.current.date(byAdding: .month, value: 1, to: monthStart),
-                        planName: "AI Pro"),
+                        resetsAt: Calendar.current.date(byAdding: .month, value: 1, to: monthStart)),
         ]
     }
 }

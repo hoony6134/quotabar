@@ -8,11 +8,11 @@ enum DefaultQuotas {
         switch service {
 
         case .claude:
-            // /api/oauth/usage 가 utilization(%)만 제공하므로 cap=100(%) 기준
+            // /api/oauth/usage 가 utilization(%)만 제공하므로 cap=100(%) 기준.
+            // Opus 별도 한도는 폐지됐고, Max 플랜의 Fable 주간 한도는 응답에 있을 때만 동적으로 추가된다.
             return [
                 item(key: "five_hour",     name: "세션 (5시간)",      cap: 100, unit: "%", period: .rollingHours(5), api: true),
                 item(key: "seven_day",     name: "주간 (전체 모델)",  cap: 100, unit: "%", period: .rollingDays(7),  api: true),
-                item(key: "seven_day_opus", name: "주간 (Opus)",      cap: 100, unit: "%", period: .rollingDays(7),  api: true),
             ]
 
         case .chatgpt:

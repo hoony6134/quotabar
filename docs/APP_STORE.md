@@ -51,3 +51,8 @@
 - [ ] 다크/라이트, Dynamic Type 큰 글씨, VoiceOver에서 요소 읽기 확인
 - [ ] 위젯 갤러리에서 6개 크기 모두 표시, 편집에서 쿼터 선택 가능
 - [ ] 번들 버전/빌드 번호 증가 (`project.yml`의 `CFBundleVersion`)
+
+## Apple Watch 앱
+- `QuotaBarWatch` 타깃(watchOS 10+)은 iOS 앱에 임베드되어 함께 배포된다. 번들 ID `com.wevoid.quotabar.mobile.watchkitapp`.
+- iPhone과 같은 iCloud 키-값 저장소(`<TeamID>.com.wevoid.quotabar`)를 직접 읽으므로 **Watch 타깃에도 같은 iCloud KVS entitlement**가 필요하다 (Developer 포털의 App ID에 iCloud 활성화).
+- 스크린샷: Apple Watch 지원 크기(Ultra 410×502 등) 중 필수 사이즈 하나 이상 제출. 심사용으로 앱 첫 화면의 "데모 보기"로 모든 화면을 확인할 수 있다.

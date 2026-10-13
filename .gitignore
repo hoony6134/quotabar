@@ -31,3 +31,6 @@ Config/iOS/*-Info.plist
 
 # 로컬 백업
 .git-backup-*.tar.gz
+
+# xcodegen이 생성하는 watchOS Info.plist
+Config/watchOS/*-Info.plist

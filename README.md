@@ -5,12 +5,13 @@ AI 구독 서비스들의 사용량 한도(쿼터)를 한 곳에서 추적하는
 
 ## 2.0 변경점
 
+- **Apple Watch 앱** (`QuotaBarWatch`): iCloud 미러를 직접 읽어 가장 높은 사용률 링·서비스별 한도·리셋 시각을 손목에서 확인하고 Mac에 새로고침을 요청할 수 있다. iPhone 앱에 포함되어 배포된다.
 - **iPhone 앱 + 위젯** (`QuotaBarMobile`): Mac이 조회한 사용률을 iCloud(키-값 저장소)로 미러링. 홈 화면(S/M/L)·잠금 화면(원형/직사각형/인라인) 위젯, 당겨서 새로고침(Mac에 갱신 요청), 데모 모드(App Review/체험용). **토큰은 iPhone으로 가지 않는다.**
 - **조회 방식 최신화** — Claude(추가 윈도우·extra usage·claude.ai 세션 폴백), Codex(`$CODEX_HOME`·JWT 플랜·app-server 폴백), Cursor(`usage-summary`·Cursor.app 로그인 자동 감지), Copilot(에디터 로그인/`gh` 자동 감지), Gemini(Code Assist 서버 잔량 + 로컬 추정). 자세한 내용은 [docs/FETCHING.md](docs/FETCHING.md).
 - **새 디자인** — 단계 색 체계(민트→앰버→오렌지→레드)·링 게이지·요약 히어로·새 앱 아이콘, 위젯 리셋 시각에 맞춘 타임라인.
 - 배포: macOS는 Developer ID 직접 배포, **iOS는 App Store** ([docs/APP_STORE.md](docs/APP_STORE.md), [개인정보 처리방침](docs/PRIVACY.md)).
 
-지원 서비스 (기본 등록): **Claude (Max) · ChatGPT/Codex (Plus) · Gemini (AI Pro) · Antigravity (AI Pro) · Cursor (Pro) · GitHub Copilot (Edu)**
+지원 서비스 (기본 등록): **Claude · ChatGPT/Codex · Gemini · Antigravity · Cursor · GitHub Copilot** — 구독 플랜명은 하드코딩하지 않고, 각 서비스에서 감지된 경우에만 표시한다.
 
 ## 기능
 
@@ -46,7 +47,7 @@ xcodegen generate
 open QuotaBar.xcodeproj   # Signing & Capabilities에서 Team 선택 후 Run
 ```
 
-스킴: `QuotaBar`(macOS 앱+위젯), `QuotaBarMobile`(iOS 앱+위젯). 빌드 후 위젯 갤러리에 "QuotaBar" 위젯이 나타난다.
+스킴: `QuotaBar`(macOS 앱+위젯), `QuotaBarMobile`(iOS 앱+위젯+Apple Watch 앱), `QuotaBarWatch`(watchOS 앱 단독). 빌드 후 위젯 갤러리에 "QuotaBar" 위젯이 나타난다.
 macOS는 small/medium/large, iOS는 여기에 잠금 화면 위젯(원형·직사각형·인라인)이 추가된다. 표시할 쿼터는 위젯 편집에서 고를 수 있다.
 앱과 위젯은 App Group(`group.com.wevoid.quotabar`)으로 데이터를 공유한다 —
 macOS 15+에서 그룹 ID 검증 문제가 생기면 `Shared/QuotaSnapshot.swift`와 `project.yml` 두 곳의 그룹 ID를
@@ -74,9 +75,9 @@ Mac 앱이 새로고침할 때마다 표시용 스냅샷(사용률·리셋 시�
 
 ## 서비스별 연동 방법
 
-### Claude (Max) — 자동
+### Claude — 자동
 계정 추가 시 **자동 감지** 버튼: Claude Code 자격증명(키체인 `Claude Code-credentials`, `~/.claude/.credentials.json`, `~/.claude.json` 등)에서 OAuth 토큰을 매 갱신마다 다시 찾는다.
-`api.anthropic.com/api/oauth/usage`에서 5시간 세션 / 주간(전체) / 주간(Opus) 사용률(%)과 리셋 시각을 받아온다.
+`api.anthropic.com/api/oauth/usage`에서 5시간 세션 / 주간(전체) / 주간(Sonnet) 사용률(%)과 리셋 시각을 받아온다. Opus 별도 한도는 폐지되어 표시하지 않으며, **Max 플랜**에서는 Fable 주간 한도도 함께 표시한다. 플랜은 응답 또는 Claude Code 자격증명의 `subscriptionType`에서 감지한다.
 
 **토큰 만료 시 자동 재발급(하이브리드).** Claude Code 토큰은 Claude Code가 실행될 때만 갱신되므로, 앱이 만료(또는 401/403)를 감지하면 다음 순서로 직접 재발급한다:
 1. 저장된 `refreshToken`으로 `console.anthropic.com/v1/oauth/token`에 직접 갱신 요청 (빠르고 쿼터 소모 없음)
@@ -84,14 +85,14 @@ Mac 앱이 새로고침할 때마다 표시용 스냅샷(사용률·리셋 시�
 
 재발급에 성공하면 회전된 토큰을 읽어온 원본(파일/키체인)에 **다시 써서 Claude Code와 동기화**한다 — 안 그러면 refresh token 회전 때문에 Claude Code 자신의 로그인이 깨질 수 있다. (키체인이 원본이면 갱신 저장 시 키체인 접근 창이 한 번 뜰 수 있으니 **항상 허용** 권장.)
 
-### ChatGPT/Codex (Plus) — 자동
+### ChatGPT/Codex — 자동
 `~/.codex/auth.json`의 Codex 자격증명을 실시간으로 읽고 `chatgpt.com/backend-api/wham/usage`에서 Codex 5시간/주간 한도 사용률을 받아온다.
 
-### Cursor (Pro) — 자동
+### Cursor — 자동
 **자동 감지**: 설치된 Cursor 앱의 로그인 상태(`state.vscdb`, 읽기 전용)에서 쿠키를 조립한다. 앱이 없다면 cursor.com 로그인 → 개발자도구 → Application → Cookies → `WorkosCursorSessionToken` 값을 붙여넣기.
 `/api/usage-summary`(포함 사용량·온디맨드·청구 주기)를 먼저, 레거시 요청 카운트와 월 인보이스는 폴백으로 시도한다.
 
-### GitHub Copilot (Edu) — 자동
+### GitHub Copilot — 자동
 **자동 감지**: VS Code 등 에디터의 Copilot 로그인(`~/.config/github-copilot/apps.json`) 또는 `gh auth token`. 직접 입력하려면 GitHub 토큰(`read:user`)을 붙여넣기.
 `api.github.com/copilot_internal/user`의 quota_snapshots에서 프리미엄 요청(월 300회) 잔량과 리셋일을 받아온다.
 
@@ -103,12 +104,12 @@ Google이 앱 잔량 API를 공개하지 않아 `~/.gemini` 및 `~/.gemini/antig
 
 | 서비스 | 쿼터 | 기본 한도 | 주기 |
 |---|---|---|---|
-| Codex Plus | Codex 세션 | 100% | 5시간 |
-| Codex Plus | Codex 주간 | 100% | 주간 |
-| Gemini AI Pro | Gemini 활동 | 100회 | 5시간/일간 |
-| Gemini AI Pro | Deep Research | 20회 | 일간 |
-| Antigravity AI Pro | Agent 활동 | 100회 | 5시간/일간 |
-| Antigravity AI Pro | Agent 활동 | 1,000회 | 월간 |
+| Codex | Codex 세션 | 100% | 5시간 |
+| Codex | Codex 주간 | 100% | 주간 |
+| Gemini | Gemini 활동 | 100회 | 5시간/일간 |
+| Gemini | Deep Research | 20회 | 일간 |
+| Antigravity | Agent 활동 | 100회 | 5시간/일간 |
+| Antigravity | Agent 활동 | 1,000회 | 월간 |
 
 한도 수치는 2026년 6월 공개 정보 기준이며 서비스가 수시로 변경하므로, 계정 카드의 ⚙︎ → 한도 편집에서 맞춰 쓰면 된다.
 

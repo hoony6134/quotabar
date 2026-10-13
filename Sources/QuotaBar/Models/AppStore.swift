@@ -380,6 +380,14 @@ final class AppStore: ObservableObject {
         }
 
         for ai in accounts.indices {
+            // 폐지된 한도 / 예전 버전이 하드코딩해 둔 플랜명 정리
+            if accounts[ai].service == .claude {
+                accounts[ai].quotas.removeAll { $0.def.key == "seven_day_opus" }
+            }
+            if accounts[ai].service == .antigravity
+                || (accounts[ai].service == .googleAI && accounts[ai].detectedPlanName == "AI Pro") {
+                accounts[ai].detectedPlanName = nil
+            }
             let defaults = DefaultQuotas.quotas(for: accounts[ai].service)
             for item in defaults where !accounts[ai].quotas.contains(where: { $0.def.key == item.def.key }) {
                 accounts[ai].quotas.append(item)

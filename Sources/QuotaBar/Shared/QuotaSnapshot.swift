@@ -145,7 +145,7 @@ struct WidgetSnapshot: Codable {
     /// (macOS 위젯은 KVS entitlement가 없으므로 파일만 본다.)
     static func load() -> WidgetSnapshot? {
         let file = loadFromGroupFile()
-        #if os(iOS)
+        #if os(iOS) || os(watchOS)
         let cloud = QuotaCloudSync.readSnapshot()
         if let cloud, cloud.generatedAt > (file?.generatedAt ?? .distantPast) { return cloud }
         #endif

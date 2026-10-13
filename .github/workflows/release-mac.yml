@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: '버전 (예: 2.0.0). 비우면 project.yml 값 사용'
+        description: '버전 (예: 2.1.0). 비우면 project.yml 값 사용'
         required: false
 
 permissions:

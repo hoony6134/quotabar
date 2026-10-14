@@ -11,7 +11,7 @@ struct CopilotConnector: QuotaConnector {
     static let autoSentinel = "auto:copilot"
     private static let url = URL(string: "https://api.github.com/copilot_internal/user")!
 
-    func fetch(credential: String) async throws -> [QuotaUpdate] {
+    func fetch(credential: String, context: ConnectorContext?) async throws -> [QuotaUpdate] {
         var token = credential
         if credential == Self.autoSentinel {
             guard let detected = Self.detectToken() else {

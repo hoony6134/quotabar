@@ -47,7 +47,7 @@ final class MobileNotifications: NSObject, UNUserNotificationCenterDelegate {
         for item in upcoming {
             guard let resetsAt = item.resetsAt else { continue }
             let content = UNMutableNotificationContent()
-            content.title = "\(item.service) 한도 초기화"
+            content.title = "\(item.title) 한도 초기화"
             let label = item.label != "기본" ? "[\(item.label)] " : ""
             content.body = "\(label)\(item.name) 쿼터가 초기화되었습니다."
             content.sound = .default

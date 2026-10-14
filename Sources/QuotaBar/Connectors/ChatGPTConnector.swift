@@ -47,7 +47,7 @@ struct ChatGPTConnector: QuotaConnector {
         var expiresAt: Date?
     }
 
-    func fetch(credential: String) async throws -> [QuotaUpdate] {
+    func fetch(credential: String, context: ConnectorContext?) async throws -> [QuotaUpdate] {
         let creds: Credentials
         if credential == Self.autoSentinel {
             guard let detected = Self.detectCodexCredentials() else {

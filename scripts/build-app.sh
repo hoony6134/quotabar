@@ -62,3 +62,7 @@ codesign --force --deep --sign - "$APP"
 echo "✓ 완료: $APP"
 echo "  실행:        open $APP"
 echo "  앱 폴더 설치: cp -R $APP /Applications/"
+
+echo ""
+echo "⚠️  ad-hoc 서명 빌드에는 iCloud(KVS)·App Group entitlement가 없어 iPhone·Apple Watch로 동기화되지 않습니다."
+echo "   동기화까지 확인하려면 Xcode(QuotaBar 스킴, Team 서명)로 빌드하거나 릴리스 빌드를 사용하세요."

@@ -12,7 +12,7 @@ import Foundation
 struct GeminiConnector: QuotaConnector {
     static let autoSentinel = "auto:gemini-local"
 
-    func fetch(credential: String) async throws -> [QuotaUpdate] {
+    func fetch(credential: String, context: ConnectorContext?) async throws -> [QuotaUpdate] {
         let home = FileManager.default.homeDirectoryForCurrentUser
         let geminiRoot = home.appendingPathComponent(".gemini")
         let tmpRoot = geminiRoot.appendingPathComponent("tmp")

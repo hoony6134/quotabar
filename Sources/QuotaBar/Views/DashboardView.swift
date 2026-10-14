@@ -151,11 +151,32 @@ struct AccountCard: View {
                 }
             }
 
+            if let identity = account.detectedIdentity, !identity.isEmpty {
+                HStack(spacing: 4) {
+                    Image(systemName: account.credentialMode == .pinned ? "pin.fill" : "arrow.triangle.2.circlepath")
+                        .font(.system(size: 9))
+                    Text(identity)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                    if account.credentialMode == .pinned {
+                        Text("고정됨")
+                    } else if account.credentialMode == .auto {
+                        Text("현재 로그인")
+                    }
+                }
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+                .help(account.credentialMode == .pinned
+                      ? "이 계정은 QuotaBar 키체인에 고정된 로그인 사본으로 조회합니다. Claude Code에서 계정을 바꿔도 유지됩니다."
+                      : "이 계정은 지금 Claude Code에 로그인된 계정을 따라갑니다.")
+            }
+
             if let error = account.lastSyncError {
                 Label(error, systemImage: "exclamationmark.triangle.fill")
                     .font(.caption)
                     .foregroundStyle(.orange)
-                    .lineLimit(2)
+                    .lineLimit(3)
+                    .textSelection(.enabled)
             }
 
             ForEach(Array(account.quotas.enumerated()), id: \.element.id) { index, item in

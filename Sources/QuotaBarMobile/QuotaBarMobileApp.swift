@@ -124,13 +124,13 @@ final class MirrorModel: ObservableObject {
 
     var hasData: Bool { !(snapshot?.items.isEmpty ?? true) }
 
-    /// 서비스 단위로 묶은 섹션 (사용률 높은 서비스 먼저)
+    /// 계정 단위로 묶은 섹션 (사용률 높은 계정 먼저) — 같은 서비스의 여러 계정은 따로 보인다
     var sections: [ServiceSection] {
         guard let snapshot else { return [] }
         var order: [String] = []
         var map: [String: [WidgetQuotaItem]] = [:]
         for item in snapshot.items {
-            let key = item.serviceID ?? item.service
+            let key = item.accountID
             if map[key] == nil { order.append(key) }
             map[key, default: []].append(item)
         }

@@ -81,6 +81,16 @@ struct WidgetQuotaItem: Codable, Identifiable, Hashable {
     var planName: String?
     /// 마지막 동기화 오류 메시지 (있으면 값이 오래됐을 수 있음)
     var syncError: String?
+    /// 같은 서비스에 계정이 여럿일 때의 표시 이름 (예: "Claude · 회사"). `labelingAccounts()`가 채운다.
+    var accountTitle: String?
+
+    /// "<accountID>::<quotaKey>"의 계정 부분 — 같은 서비스의 여러 계정을 구분한다.
+    var accountID: String {
+        id.range(of: "::").map { String(id[..<$0.lowerBound]) } ?? id
+    }
+
+    /// 화면 표시용 이름: 계정이 하나면 서비스 이름, 여럿이면 계정 라벨을 붙인 이름
+    var title: String { accountTitle ?? service }
 }
 
 struct WidgetSnapshot: Codable {
@@ -150,17 +160,51 @@ struct WidgetSnapshot: Codable {
         #if os(iOS) || os(watchOS)
         // 위젯/컴플리케이션 프로세스는 오래 살아 있으면 로컬 KVS 캐시가 낡을 수 있어 읽기 전에 당겨온다.
         QuotaCloudSync.synchronize()
-        // watchOS는 앱 그룹 없이 앱↔컴플리케이션이 KVS만 공유한다(릴레이 키: iPhone이 직접 보낸 값).
+        // 앱 그룹 파일이 기본 경로이고, KVS(Mac 스냅샷·iPhone 릴레이)가 더 새로우면 그것을 쓴다.
         for candidate in [QuotaCloudSync.readSnapshot(), QuotaCloudSync.readRelay()] {
             if let candidate, candidate.generatedAt > (best?.generatedAt ?? .distantPast) {
                 best = candidate
             }
         }
         #endif
-        return best
+        return best?.labelingAccounts()
     }
 
     var worstPercent: Double { items.map(\.percent).max() ?? 0 }
+
+    /// 계정이 둘 이상인 서비스의 항목에 `accountTitle`("Claude · 회사")을 채운다.
+    /// 라벨이 겹치면 "Claude · 기본 2"처럼 순번을 붙인다. 구버전 Mac 스냅샷도 기기에서 보정된다.
+    func labelingAccounts() -> WidgetSnapshot {
+        var accountsByService: [String: [String]] = [:]
+        var labels: [String: String] = [:]
+        for item in items {
+            let service = item.serviceID ?? item.service
+            if !(accountsByService[service] ?? []).contains(item.accountID) {
+                accountsByService[service, default: []].append(item.accountID)
+                labels[item.accountID] = item.label
+            }
+        }
+        var titles: [String: String] = [:]
+        for (_, accounts) in accountsByService where accounts.count > 1 {
+            var seen: [String: Int] = [:]
+            for account in accounts {
+                let label = labels[account] ?? ""
+                seen[label, default: 0] += 1
+                let n = seen[label]!
+                titles[account] = n > 1 ? "\(label) \(n)" : label
+            }
+        }
+        var copy = self
+        for i in copy.items.indices {
+            if let label = titles[copy.items[i].accountID] {
+                copy.items[i].accountTitle = label.isEmpty ? copy.items[i].service
+                    : "\(copy.items[i].service) · \(label)"
+            } else {
+                copy.items[i].accountTitle = nil
+            }
+        }
+        return copy
+    }
 
     static let sample = WidgetSnapshot(
         generatedAt: Date(),

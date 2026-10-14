@@ -91,7 +91,7 @@ enum ServiceKind: String, Codable, CaseIterable, Identifiable {
     var authHint: String {
         switch self {
         case .claude:
-            return "'자동 감지'는 Claude Code 자격증명을 저장하지 않고 매 갱신마다 다시 읽습니다. 파일을 먼저 보고, 키체인은 확인 창 없이 접근 가능한 항목만 조용히 조회합니다. Claude Code가 없다면 claude.ai의 sessionKey 쿠키(sk-ant-sid…)를 붙여넣어도 됩니다."
+            return "'자동 감지'는 지금 Claude Code에 로그인된 계정을 따라갑니다(토큰 저장 없음). '현재 로그인 가져오기'는 로그인된 계정의 토큰 사본을 QuotaBar 키체인에 고정해, Claude Code에서 다른 계정으로 전환해도 계속 조회합니다. 팀·개인 계정을 함께 보려면 각각 로그인한 상태에서 하나씩 가져오세요. Claude Code가 없다면 claude.ai의 sessionKey 쿠키(sk-ant-sid…)를 붙여넣어도 됩니다."
         case .chatgpt:
             return "'자동 감지'는 Codex 자격증명(~/.codex/auth.json)을 실시간으로 읽어 Codex 5시간/주간 한도를 조회합니다."
         case .googleAI:
@@ -198,6 +198,27 @@ struct QuotaItem: Codable, Hashable, Identifiable {
 
 // MARK: - 계정
 
+/// 계정이 어떤 방식의 자격증명으로 조회하는지 (표시용; 실제 값은 키체인에 있다).
+enum CredentialMode: String, Codable {
+    /// 로컬 CLI/앱의 현재 로그인을 매 갱신마다 다시 읽는다 (센티널).
+    case auto
+    /// Claude Code 로그인의 사본을 QuotaBar 키체인에 고정 (Claude Code에서 계정을 바꿔도 유지).
+    case pinned
+    /// 직접 붙여넣은 액세스 토큰/쿠키.
+    case token
+    /// claude.ai 웹 세션 쿠키(sessionKey).
+    case webSession
+
+    var label: String {
+        switch self {
+        case .auto:       return "현재 로그인 따라가기"
+        case .pinned:     return "고정된 로그인"
+        case .token:      return "직접 입력한 토큰"
+        case .webSession: return "claude.ai 세션 쿠키"
+        }
+    }
+}
+
 struct Account: Codable, Identifiable, Hashable {
     var id: UUID = UUID()
     var service: ServiceKind
@@ -209,6 +230,10 @@ struct Account: Codable, Identifiable, Hashable {
     var lastSyncError: String?
     var lastSyncAt: Date?
     var detectedPlanName: String?
+    /// 자격증명 방식 (nil = 구버전 데이터, 첫 갱신 때 채워진다)
+    var credentialMode: CredentialMode?
+    /// 커넥터가 알아낸 "이 토큰은 누구의 것인가" (예: "me@example.com · TexCorps (Team)")
+    var detectedIdentity: String?
 
     /// 가장 높은 사용률 (대시보드/메뉴막대 요약용)
     var worstUtilization: Double {

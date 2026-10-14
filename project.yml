@@ -194,6 +194,9 @@ targets:
     entitlements:
       path: Config/watchOS/QuotaBarWatch.entitlements
       properties:
+        # 앱 → 컴플리케이션 스냅샷 전달 (위젯 익스텐션은 iCloud KVS 갱신을 안정적으로 받지 못한다)
+        com.apple.security.application-groups:
+          - group.com.wevoid.quotabar
         com.apple.developer.ubiquity-kvstore-identifier: $(TeamIdentifierPrefix)com.wevoid.quotabar
     settings:
       base:
@@ -212,7 +215,13 @@ targets:
     platform: watchOS
     sources:
       - path: Sources/QuotaBarWatchWidget
+        excludes:
+          - "Logos/**"
       - path: Sources/QuotaBar/Shared
+      # 서비스 로고 PNG (컴플리케이션 아이콘용). 워치 위젯은 큰 이미지를 넣으면 아카이브에 실패해
+      # placeholder로만 표시되므로 64px로 줄인 사본을 쓴다.
+      - path: Sources/QuotaBarWatchWidget/Logos
+        buildPhase: resources
     info:
       path: Config/watchOS/QuotaBarWatchWidget-Info.plist
       properties:
@@ -224,6 +233,8 @@ targets:
     entitlements:
       path: Config/watchOS/QuotaBarWatchWidget.entitlements
       properties:
+        com.apple.security.application-groups:
+          - group.com.wevoid.quotabar
         com.apple.developer.ubiquity-kvstore-identifier: $(TeamIdentifierPrefix)com.wevoid.quotabar
     settings:
       base:

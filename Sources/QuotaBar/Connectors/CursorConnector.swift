@@ -14,7 +14,7 @@ import Foundation
 struct CursorConnector: QuotaConnector {
     static let autoSentinel = "auto:cursor-app"
 
-    func fetch(credential: String) async throws -> [QuotaUpdate] {
+    func fetch(credential: String, context: ConnectorContext?) async throws -> [QuotaUpdate] {
         let resolved = try Self.resolveCookie(credential)
         var updates: [QuotaUpdate] = []
         var lastError: Error?

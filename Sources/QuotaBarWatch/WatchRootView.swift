@@ -71,7 +71,7 @@ private struct SummaryRow: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     if let top {
-                        Text(top.service).font(.headline)
+                        Text(top.title).font(.headline)
                         Text(top.name)
                             .font(.caption2)
                             .foregroundStyle(.secondary)
@@ -83,7 +83,7 @@ private struct SummaryRow: View {
                 }
             }
             .accessibilityElement(children: .combine)
-            .accessibilityLabel(top.map { "\($0.service) \($0.name) \(Int(percent))퍼센트 사용, \(QuotaTheme.levelLabel(percent: percent))" } ?? "")
+            .accessibilityLabel(top.map { "\($0.title) \($0.name) \(Int(percent))퍼센트 사용, \(QuotaTheme.levelLabel(percent: percent))" } ?? "")
         }
     }
 
@@ -102,7 +102,7 @@ private struct ServiceRow: View {
         HStack(spacing: 8) {
             ServiceMark(serviceID: section.first.serviceID, colorHex: section.first.colorHex, size: 26)
             VStack(alignment: .leading, spacing: 1) {
-                Text(section.first.service).font(.footnote.weight(.semibold))
+                Text(section.first.title).font(.footnote.weight(.semibold))
                 if let plan = section.items.compactMap(\.planName).first {
                     Text(plan).font(.caption2).foregroundStyle(.secondary)
                 }
@@ -114,7 +114,7 @@ private struct ServiceRow: View {
                 .foregroundStyle(QuotaTheme.levelColor(percent: percent))
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(section.first.service) 최대 \(Int(percent))퍼센트 사용")
+        .accessibilityLabel("\(section.first.title) 최대 \(Int(percent))퍼센트 사용")
     }
 }
 
@@ -129,7 +129,7 @@ private struct ServiceDetailView: View {
                 QuotaDetailRow(item: item)
             }
         }
-        .navigationTitle(section.first.service)
+        .navigationTitle(section.first.title)
     }
 }
 

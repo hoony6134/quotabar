@@ -1,0 +1,195 @@
+{"app_name":"QuotaBarWatchWidget","timestamp":"2026-10-13 15:43:25.00 +0900","app_version":"2.0.0","slice_uuid":"440df04c-5ba6-3430-8a9f-ea1bdbcc574e","build_version":"8","platform":4,"bundleID":"com.wevoid.quotabar.mobile.watchkitapp.widget","share_with_app_devs":0,"is_first_party":0,"bug_type":"309","os_version":"Watch OS 27.2 (24S5091f)","roots_installed":0,"name":"QuotaBarWatchWidget","incident_id":"44751F2C-E647-4CD2-A811-7C5BE9B68CA2"}
+{
+  "uptime" : 6600,
+  "procRole" : "unknown",
+  "version" : 2,
+  "userID" : 501,
+  "deployVersion" : 210,
+  "modelCode" : "Watch7,17",
+  "coalitionID" : 841,
+  "osVersion" : {
+    "isEmbedded" : true,
+    "train" : "Watch OS 27.2",
+    "releaseType" : "User",
+    "build" : "24S5091f"
+  },
+  "captureTime" : "2026-10-13 15:43:24.6802 +0900",
+  "codeSigningMonitor" : 2,
+  "incident" : "44751F2C-E647-4CD2-A811-7C5BE9B68CA2",
+  "pid" : 744,
+  "cpuType" : "ARM-64",
+  "procLaunch" : "2026-10-13 15:43:24.4787 +0900",
+  "procStartAbsTime" : 159594416894,
+  "procExitAbsTime" : 159597904548,
+  "procName" : "QuotaBarWatchWidget",
+  "procPath" : "\/private\/var\/containers\/Bundle\/Application\/07A9A229-561B-41EF-AA08-5FCF3495FD65\/QuotaBarWatch.app\/PlugIns\/QuotaBarWatchWidget.appex\/QuotaBarWatchWidget",
+  "bundleInfo" : {"CFBundleShortVersionString":"2.0.0","CFBundleVersion":"8","CFBundleIdentifier":"com.wevoid.quotabar.mobile.watchkitapp.widget"},
+  "storeInfo" : {"deviceIdentifierForVendor":"C43FBD6D-118A-4D2A-A772-2DE6EAEF7917","thirdParty":true},
+  "parentProc" : "launchd",
+  "parentPid" : 1,
+  "coalitionName" : "com.wevoid.quotabar.mobile.watchkitapp.widget",
+  "crashReporterKey" : "3ee27d874861478529b27fa13067eb2e855b983e",
+  "developerMode" : 1,
+  "bootProgressRegister" : "0x2000000c",
+  "wasUnlockedSinceBoot" : 1,
+  "isLocked" : 0,
+  "throttleTimeout" : 10,
+  "codeSigningID" : "com.wevoid.quotabar.mobile.watchkitapp.widget",
+  "codeSigningTeamID" : "2S9H42VJUA",
+  "codeSigningFlags" : 570434309,
+  "codeSigningValidationCategory" : 3,
+  "codeSigningTrustLevel" : 4,
+  "codeSigningAuxiliaryInfo" : 9007199254740992,
+  "instructionByteStream" : {"beforePC":"IAAg1IEF+LfpAwC54gMDquMDBKrkAwWq5QMGquYDB6rnAwiqgQIAlA==","atPC":"IAAg1IgSgFL\/EwC56AcA+UgAgFLoAwA5IBYA0AAQFpEjFgDQY8AikQ=="},
+  "bootSessionUUID" : "366A7A9F-71FD-48E4-A953-A90AFD390857",
+  "exception" : {"codes":"0x0000000000000001, 0x0000000189b7cca4","rawCodes":[1,6605491364],"type":"EXC_BREAKPOINT","signal":"SIGTRAP"},
+  "termination" : {"flags":0,"code":5,"namespace":"SIGNAL","indicator":"Trace\/BPT trap: 5","byProc":"exc handler","byPid":744},
+  "os_fault" : {"process":"QuotaBarWatchWidget"},
+  "faultingThread" : 0,
+  "threads" : [{"triggered":true,"id":56574,"threadState":{"x":[{"value":4379057832},{"value":8589934595,"objc-selector":"<std::recursive_mutex>>=\"first\"{unique_lock<std::recursive_mutex>=\"__m_\"^{recursive_mutex}\"__owns_\"B}\"second\"{unique_lock<std::recursive_mutex>=\"__m_\"^{recursive_mutex}\"__owns_\"B}})\"__engaged_\"B}"},{"value":1},{"value":2147750866},{"value":0},{"value":6096343024},{"value":100},{"value":18446744072367376383},{"value":18446744065119617024},{"value":4290714777},{"value":0},{"value":0},{"value":3799912189846374},{"value":3782320003799870},{"value":57344},{"value":0},{"value":8589934595,"objc-selector":"<std::recursive_mutex>>=\"first\"{unique_lock<std::recursive_mutex>=\"__m_\"^{recursive_mutex}\"__owns_\"B}\"second\"{unique_lock<std::recursive_mutex>=\"__m_\"^{recursive_mutex}\"__owns_\"B}})\"__engaged_\"B}"},{"value":3},{"value":0},{"value":8290284376},{"value":6096343488},{"value":9223372044564218016},{"value":14987979559889010711},{"value":6096343392},{"value":6096343440},{"value":8450092728},{"value":1},{"value":0},{"value":4379161328}],"flavor":"ARM_THREAD_STATE64","lr":{"value":6605491364},"cpsr":{"value":1610616832},"fp":{"value":6096343360},"sp":{"value":6096343328},"esr":{"value":4060086273,"description":"(Breakpoint) brk 1"},"pc":{"value":6605491364,"matchesCrashFrame":1},"far":{"value":0}},"queue":"com.apple.main-thread","frames":[{"imageOffset":1862820,"imageIndex":2},{"imageOffset":1069312,"imageIndex":3},{"imageOffset":439284,"imageIndex":3},{"imageOffset":39620,"imageIndex":1},{"imageOffset":44528,"imageIndex":1},{"imageOffset":443236,"imageIndex":3},{"imageOffset":466204,"imageIndex":3},{"imageOffset":438308,"imageIndex":3},{"imageOffset":1657604,"imageIndex":3},{"imageOffset":1645992,"imageIndex":3},{"imageOffset":1655152,"imageIndex":3},{"imageOffset":112408,"imageIndex":3},{"imageOffset":884012,"imageIndex":3},{"imageOffset":6580,"imageIndex":4},{"imageOffset":111436,"imageIndex":4},{"imageOffset":234632,"imageIndex":4},{"imageOffset":68284,"imageIndex":4},{"imageOffset":68092,"imageIndex":4},{"imageOffset":58828,"imageIndex":5},{"imageOffset":39612,"imageIndex":5},{"imageOffset":47292,"imageIndex":5},{"imageOffset":301308,"imageIndex":6},{"imageOffset":403848,"imageIndex":6},{"imageOffset":133672,"imageIndex":7},{"imageOffset":144180,"imageIndex":7},{"imageOffset":144108,"imageIndex":7},{"imageOffset":276696,"imageIndex":8},{"imageOffset":269088,"imageIndex":9},{"imageOffset":263180,"imageIndex":9},{"imageOffset":221036,"imageIndex":9},{"imageOffset":218556,"imageIndex":9},{"imageOffset":2942508,"imageIndex":6},{"imageOffset":29964,"imageIndex":10}]},{"id":56577,"frames":[],"threadState":{"x":[{"value":6096908288},{"value":3843},{"value":6096371712},{"value":0},{"value":409602},{"value":18446744073709551615},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0}],"flavor":"ARM_THREAD_STATE64","lr":{"value":0},"cpsr":{"value":4096},"fp":{"value":0},"sp":{"value":6096908288},"esr":{"value":1442840704,"description":"(Syscall)"},"pc":{"value":6786193672},"far":{"value":0}}},{"id":56578,"frames":[],"threadState":{"x":[{"value":6097481728},{"value":5379},{"value":6096945152},{"value":0},{"value":409604},{"value":18446744073709551615},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0}],"flavor":"ARM_THREAD_STATE64","lr":{"value":0},"cpsr":{"value":4096},"fp":{"value":0},"sp":{"value":6097481728},"esr":{"value":1442840704,"description":"(Syscall)"},"pc":{"value":6786193672},"far":{"value":0}}}],
+  "usedImages" : [
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 4370530304,
+    "size" : 49152,
+    "uuid" : "440df04c-5ba6-3430-8a9f-ea1bdbcc574e",
+    "path" : "\/private\/var\/containers\/Bundle\/Application\/07A9A229-561B-41EF-AA08-5FCF3495FD65\/QuotaBarWatch.app\/PlugIns\/QuotaBarWatchWidget.appex\/QuotaBarWatchWidget",
+    "name" : "QuotaBarWatchWidget"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 4373069824,
+    "size" : 278528,
+    "uuid" : "8fa05a9c-8c2a-3fbf-b60a-5fbc57a29918",
+    "path" : "\/private\/var\/containers\/Bundle\/Application\/07A9A229-561B-41EF-AA08-5FCF3495FD65\/QuotaBarWatch.app\/PlugIns\/QuotaBarWatchWidget.appex\/QuotaBarWatchWidget.debug.dylib",
+    "name" : "QuotaBarWatchWidget.debug.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 6603628544,
+    "size" : 5772784,
+    "uuid" : "771560d8-85e1-349c-b9e3-a9792b4c3742",
+    "path" : "\/usr\/lib\/swift\/libswiftCore.dylib",
+    "name" : "libswiftCore.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 7707217920,
+    "size" : 2661084,
+    "uuid" : "13cb2813-53e5-3aa5-9341-51076af1f290",
+    "path" : "\/System\/Library\/Frameworks\/WidgetKit.framework\/WidgetKit",
+    "name" : "WidgetKit"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 6667542528,
+    "size" : 284160,
+    "uuid" : "7cd82ee2-7f29-33e7-abc9-fb9929a44746",
+    "path" : "\/usr\/lib\/system\/libdispatch.dylib",
+    "name" : "libdispatch.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 6613016576,
+    "size" : 4341800,
+    "uuid" : "b40488f2-88aa-3823-8107-1b41b9edef3f",
+    "path" : "\/System\/Library\/Frameworks\/CoreFoundation.framework\/CoreFoundation",
+    "name" : "CoreFoundation"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 6583635968,
+    "size" : 17839356,
+    "uuid" : "23bb93ae-b961-3f2f-b51d-19dc8b3a6d62",
+    "path" : "\/System\/Library\/Frameworks\/Foundation.framework\/Foundation",
+    "name" : "Foundation"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 6785650688,
+    "size" : 337248,
+    "uuid" : "90c26cd8-72ae-3c91-86b3-91cac66310ba",
+    "path" : "\/usr\/lib\/system\/libxpc.dylib",
+    "name" : "libxpc.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 6783438848,
+    "size" : 657264,
+    "uuid" : "69ba152a-3513-3a8b-b94f-fb135f595bc5",
+    "path" : "\/System\/Library\/PrivateFrameworks\/BoardServices.framework\/BoardServices",
+    "name" : "BoardServices"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 7092420608,
+    "size" : 1335536,
+    "uuid" : "c71e90ab-084c-3fcd-9a7d-6b0b27d40e8a",
+    "path" : "\/System\/Library\/Frameworks\/ExtensionFoundation.framework\/ExtensionFoundation",
+    "name" : "ExtensionFoundation"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 6576283648,
+    "size" : 695792,
+    "uuid" : "71d65f9b-9645-3bbb-9b78-ad58fd8c13a8",
+    "path" : "\/usr\/lib\/dyld",
+    "name" : "dyld"
+  },
+  {
+    "size" : 0,
+    "source" : "A",
+    "base" : 0,
+    "uuid" : "00000000-0000-0000-0000-000000000000"
+  }
+],
+  "sharedCache" : {
+  "base" : 6571556864,
+  "size" : 3990323200,
+  "uuid" : "f8d02586-1b99-391b-b287-bba67a4e8e01"
+},
+  "vmSummary" : "ReadOnly portion of Libraries: Total=1.2G resident=0K(0%) swapped_out_or_unallocated=1.2G(100%)\nWritable regions: Total=10.6M written=225K(2%) resident=225K(2%) swapped_out=0K(0%) unallocated=10.4M(98%)\n\n                                VIRTUAL   REGION \nREGION TYPE                        SIZE    COUNT (non-coalesced) \n===========                     =======  ======= \nActivity Tracing                   256K        1 \nAttributeGraph Data               1024K        1 \nDispatch Continuations            2048K        1 \nGuard                            385.0G        1 \nMalloc                            5184K        6 \nMalloc Guard Page                 3184K        2 \nOS Alloc Once                       32K        1 \nStack                             2096K        3 \nStack Guard                         48K        3 \n__AUTH                            3580K      249 \n__AUTH_CONST                      60.3M      587 \n__CTF                               824        1 \n__DATA                            18.4M      558 \n__DATA_CONST                      23.2M      619 \n__DATA_DIRTY                      10.9M      585 \n__FONT_DATA                        2352        1 \n__LINKEDIT                       395.1M        3 \n__OBJC_RO                         93.8M        1 \n__OBJC_RW                         2079K        1 \n__TEXT                           798.3M      647 \n__TPRO_CONST                       128K        4 \nmapped file                       34.8M        3 \npage table in kernel               225K        1 \nshared memory                       64K        3 \n===========                     =======  ======= \nTOTAL                            386.4G     3282 \n",
+  "legacyInfo" : {
+  "threadTriggered" : {
+    "queue" : "com.apple.main-thread"
+  }
+},
+  "logWritingSignature" : "103870a0d48ea29ed52ecdd0a1809f58f231023e",
+  "bug_type" : "309",
+  "roots_installed" : 0,
+  "sandboxProfileName" : "container",
+  "spawnFlags" : 17420,
+  "voucherInfos" : [{"originatorName":"chronod","proximateName":"chronod","thread_id":56574}],
+  "trialInfo" : {
+  "rollouts" : [
+    {
+      "rolloutId" : "6761d0c9df60af01adb250fb",
+      "factorPackIds" : [
+
+      ],
+      "deploymentId" : 250000008
+    },
+    {
+      "rolloutId" : "654119024fac9d2df9ecb124",
+      "factorPackIds" : [
+
+      ],
+      "deploymentId" : 250000003
+    }
+  ],
+  "experiments" : [
+
+  ]
+}
+}

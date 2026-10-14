@@ -58,15 +58,16 @@ final class WatchMirrorModel: ObservableObject {
         reload()
     }
 
-    /// iPhone에서 받은 스냅샷이 현재 것보다 새로우면 KVS 릴레이 키에 저장해
-    /// 앱 화면과 컴플리케이션이 함께 쓰게 하고, 화면이 열려 있으면 즉시 갱신한다.
+    /// iPhone에서 받은 스냅샷이 현재 것보다 새로우면 앱 그룹 파일(컴플리케이션용)과
+    /// KVS 릴레이 키에 저장하고, 화면이 열려 있으면 즉시 갱신한다.
     private static var current: WatchMirrorModel?
     private static func adopt(_ snapshot: WidgetSnapshot) {
         guard snapshot.isDemo != true,
               snapshot.generatedAt > (WidgetSnapshot.load()?.generatedAt ?? .distantPast) else { return }
+        snapshot.writeToGroupFiles()
         QuotaCloudSync.writeRelay(snapshot)
         current?.reload()
-        if current == nil { WidgetCenter.shared.reloadAllTimelines() }
+        if current == nil { reloadComplications() }
     }
 
     // MARK: 백그라운드 갱신
@@ -84,14 +85,23 @@ final class WatchMirrorModel: ObservableObject {
         scheduleBackgroundRefresh()
         PhoneWatchBridge.shared.activate()
         _ = await QuotaCloudSync.pull()
+        WidgetSnapshot.load()?.writeToGroupFiles()
+        reloadComplications()
+    }
+
+    /// 컴플리케이션 값과, 컴플리케이션 목록의 "한도 선택" 항목(계정·한도별)을 새 스냅샷으로 다시 만든다.
+    static func reloadComplications() {
         WidgetCenter.shared.reloadAllTimelines()
+        WidgetCenter.shared.invalidateConfigurationRecommendations()
     }
 
     func reload() {
         QuotaCloudSync.synchronize()
         snapshot = demoMode ? .demo() : WidgetSnapshot.load()
+        // 컴플리케이션 익스텐션은 iCloud KVS 갱신을 제때 받지 못하므로 앱 그룹 파일로 넘겨준다.
+        if !demoMode { snapshot?.writeToGroupFiles() }
         // 컴플리케이션도 새 값으로 갱신
-        WidgetCenter.shared.reloadAllTimelines()
+        Self.reloadComplications()
     }
 
     /// Mac에 갱신을 요청하고 최대 8초 동안 새 값을 기다린다.
@@ -110,13 +120,13 @@ final class WatchMirrorModel: ObservableObject {
 
     var hasData: Bool { !(snapshot?.items.isEmpty ?? true) }
 
-    /// 서비스 단위로 묶은 섹션 (사용률 높은 서비스 먼저)
+    /// 계정 단위로 묶은 섹션 (사용률 높은 계정 먼저) — 같은 서비스의 여러 계정은 따로 보인다
     var sections: [WatchServiceSection] {
         guard let snapshot else { return [] }
         var order: [String] = []
         var map: [String: [WidgetQuotaItem]] = [:]
         for item in snapshot.items {
-            let key = item.serviceID ?? item.service
+            let key = item.accountID
             if map[key] == nil { order.append(key) }
             map[key, default: []].append(item)
         }

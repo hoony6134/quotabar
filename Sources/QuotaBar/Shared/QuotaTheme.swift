@@ -95,8 +95,8 @@ enum SharedLogo {
     static func image(for serviceID: String?) -> PlatformImage? {
         guard let serviceID, !serviceID.isEmpty else { return nil }
         if let cached = cache[serviceID] { return cached }
-        var bundles: [Bundle] = [Bundle.main] + Bundle.allBundles + Bundle.allFrameworks
-        bundles.append(Bundle(for: BundleToken.self))
+        // 시스템 프레임워크 전체(Bundle.allFrameworks)를 뒤지면 워치 위젯처럼 실행 시간 예산이 작은 곳에서 느려진다.
+        let bundles: [Bundle] = [Bundle.main, Bundle(for: BundleToken.self)]
         let url = bundles.lazy.compactMap { bundle in
             bundle.url(forResource: serviceID, withExtension: "png", subdirectory: "Logos")
                 ?? bundle.url(forResource: serviceID, withExtension: "png")

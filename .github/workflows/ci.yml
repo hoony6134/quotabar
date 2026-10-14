@@ -51,6 +51,10 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             build | tee build.log | tail -n 40
 
+      - name: Show compiler errors on failure
+        if: failure()
+        run: grep -E "error:" build.log | sort -u | head -50 || true
+
       - name: Upload build log on failure
         if: failure()
         uses: actions/upload-artifact@v4

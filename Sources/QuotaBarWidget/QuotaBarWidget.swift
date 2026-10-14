@@ -61,7 +61,7 @@ struct QuotaItemQuery: EntityQuery {
         let items = WidgetSnapshot.load()?.items ?? []
         return items.map {
             QuotaItemEntity(id: $0.id,
-                            title: "\($0.service) · \($0.name)",
+                            title: "\($0.title) · \($0.name)",
                             subtitle: $0.label)
         }
     }
@@ -315,7 +315,7 @@ private struct SmallView: View {
         VStack(spacing: 6) {
             HStack(spacing: 5) {
                 ServiceMark(serviceID: top.serviceID, colorHex: top.colorHex, size: 18)
-                Text(top.service)
+                Text(top.title)
                     .font(.caption.bold())
                     .lineLimit(1)
                 Spacer(minLength: 0)
@@ -341,7 +341,7 @@ private struct SmallView: View {
             }
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(top.service) \(top.name) \(Int(percent))퍼센트 사용")
+        .accessibilityLabel("\(top.title) \(top.name) \(Int(percent))퍼센트 사용")
     }
 }
 
@@ -378,7 +378,7 @@ private struct ListView: View {
             ServiceMark(serviceID: item.serviceID, colorHex: item.colorHex, size: 22)
             VStack(alignment: .leading, spacing: 3) {
                 HStack(alignment: .firstTextBaseline) {
-                    Text(item.service)
+                    Text(item.title)
                         .font(.system(size: 11, weight: .semibold))
                     Text(item.name)
                         .font(.system(size: 10))
@@ -395,7 +395,7 @@ private struct ListView: View {
             }
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(item.service) \(item.name) \(Int(percent))퍼센트")
+        .accessibilityLabel("\(item.title) \(item.name) \(Int(percent))퍼센트")
     }
 }
 
@@ -415,7 +415,7 @@ private struct AccessoryCircularView: View {
                 .font(.system(.body, design: .rounded).bold())
         }
         .gaugeStyle(.accessoryCircular)
-        .accessibilityLabel("\(item.service) \(Int(percent))퍼센트")
+        .accessibilityLabel("\(item.title) \(Int(percent))퍼센트")
     }
 }
 
@@ -427,7 +427,7 @@ private struct AccessoryRectangularView: View {
         let percent = item.effectivePercent(at: date)
         VStack(alignment: .leading, spacing: 2) {
             HStack {
-                Text(item.service).font(.headline).lineLimit(1)
+                Text(item.title).font(.headline).lineLimit(1)
                 Spacer()
                 Text("\(Int(percent))%").font(.headline).monospacedDigit()
             }
@@ -444,7 +444,7 @@ private struct AccessoryInlineView: View {
     let date: Date
 
     var body: some View {
-        Text("\(item.service) \(Int(item.effectivePercent(at: date)))% · \(item.periodLabel ?? item.name)")
+        Text("\(item.title) \(Int(item.effectivePercent(at: date)))% · \(item.periodLabel ?? item.name)")
     }
 }
 #endif

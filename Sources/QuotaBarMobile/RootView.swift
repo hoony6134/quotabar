@@ -145,7 +145,7 @@ struct HeroCard: View {
                 if let top {
                     HStack(spacing: 8) {
                         ServiceMark(serviceID: top.serviceID, colorHex: top.colorHex, size: 24)
-                        Text(top.service).font(.headline)
+                        Text(top.title).font(.headline)
                     }
                     Text(top.name)
                         .font(.subheadline)
@@ -163,7 +163,7 @@ struct HeroCard: View {
         .padding(18)
         .glassCard(cornerRadius: 24)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(top.map { "\($0.service) \($0.name) \(Int(percent))퍼센트 사용, \(QuotaTheme.levelLabel(percent: percent))" } ?? "")
+        .accessibilityLabel(top.map { "\($0.title) \($0.name) \(Int(percent))퍼센트 사용, \(QuotaTheme.levelLabel(percent: percent))" } ?? "")
     }
 }
 
@@ -175,7 +175,7 @@ struct ServiceCard: View {
             HStack(spacing: 10) {
                 ServiceMark(serviceID: section.first.serviceID, colorHex: section.first.colorHex, size: 30)
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(section.first.service).font(.headline)
+                    Text(section.first.title).font(.headline)
                     if let plan = section.items.compactMap(\.planName).first {
                         Text(plan).font(.caption).foregroundStyle(.secondary)
                     }

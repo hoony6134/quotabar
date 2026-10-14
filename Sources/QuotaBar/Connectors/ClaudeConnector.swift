@@ -1,21 +1,28 @@
+import CryptoKit
 import Foundation
 import LocalAuthentication
 import Security
 
-/// Claude (Pro/Max) — Claude Code가 쓰는 OAuth usage 엔드포인트에서
-/// 5시간 세션 / 7일 / 7일(Sonnet·Max 플랜의 Fable 등) 사용률(%)을 가져온다. 비공식 엔드포인트.
+/// Claude (Pro/Max/Team) — Claude Code가 쓰는 OAuth usage 엔드포인트에서
+/// 5시간 세션 / 7일 / 모델별 7일 사용률(%)을 가져온다. 비공식 엔드포인트.
 ///
-/// 인증 모드 두 가지:
-/// 1. `auto:claude-code` 센티널 — 매 갱신마다 Claude Code 자격증명을 실시간으로
-///    다시 읽는다. 토큰이 만료된 것 같으면 **하이브리드로 재발급**한다:
+/// 인증 모드 네 가지:
+/// 1. `auto:claude-code` 센티널 — **현재 Claude Code에 로그인된 계정을 따라간다.** 매 갱신마다
+///    자격증명을 실시간으로 다시 읽는다. 토큰이 만료된 것 같으면 **하이브리드로 재발급**한다:
 ///      (1) 저장된 refresh token으로 OAuth 토큰을 직접 갱신 (빠르고 쿼터 소모 없음)
 ///      (2) 실패하면 `claude` CLI를 한 번 실행해 Claude Code가 직접 갱신하게 함
-///    재발급에 성공하면 회전된 토큰을 원본(파일/키체인)에 다시 써서 Claude Code와
-///    동기화한다. (권장)
-/// 2. 직접 붙여넣은 액세스 토큰 — 만료되면 401이 난다.
+///    재발급에 성공하면 회전된 토큰을 원본(파일/키체인)에 다시 써서 Claude Code와 동기화한다.
+/// 2. `claude-profile:<base64 JSON>` — **고정된 로그인.** 지금 로그인된 계정의 토큰 사본을
+///    QuotaBar 키체인에 보관해, Claude Code에서 다른 계정(팀 ↔ 개인)으로 전환해도 계속 조회한다.
+///    만료되면 자체 refresh token으로 갱신하고 회전된 토큰은 QuotaBar 키체인에만 저장한다.
+///    단, Claude Code가 아직 같은 세션(같은 refresh token)을 쓰고 있으면 거기에도 반영한다.
+///    Claude Code가 같은 조직에 더 새 토큰으로 로그인돼 있으면 그 토큰을 자동으로 채택한다.
+/// 3. 직접 붙여넣은 액세스 토큰 — 만료되면 401이 난다.
+/// 4. claude.ai 웹 세션 쿠키(sessionKey) — 웹 API 경로.
 struct ClaudeConnector: QuotaConnector {
     static let autoSentinel = "auto:claude-code"
     private static let url = URL(string: "https://api.anthropic.com/api/oauth/usage")!
+    private static let profileURL = URL(string: "https://api.anthropic.com/api/oauth/profile")!
 
     // Claude Code OAuth 토큰 엔드포인트/클라이언트 (Claude Code와 동일한 값).
     private static let oauthTokenURL = URL(string: "https://console.anthropic.com/v1/oauth/token")!
@@ -35,30 +42,45 @@ struct ClaudeConnector: QuotaConnector {
         var source: Source?
         /// 자격증명 JSON의 `subscriptionType` (예: "max", "pro") — 사용량 응답에 플랜이 없을 때의 감지 근거.
         var subscriptionType: String?
+        /// 자격증명 JSON의 `rateLimitTier` (예: "default_claude_max_5x").
+        var rateLimitTier: String?
     }
 
-    func fetch(credential: String) async throws -> [QuotaUpdate] {
+    func fetch(credential: String, context: ConnectorContext?) async throws -> [QuotaUpdate] {
         // 429 직후엔 아예 네트워크를 타지 않는다 — 식지 않은 채로 계속 재시도하면
         // 오히려 차단이 계속 연장될 수 있다("시간이 지나도 안 풀린다"는 증상의 원인).
         if let until = Self.rateLimitedUntil, until > Date() {
             throw ConnectorError.hint(Self.rateLimitHint(until: until))
         }
 
-        // claude.ai 웹 세션 쿠키(sessionKey)를 붙여넣은 경우: OAuth 대신 웹 API 사용 (2번째 경로)
+        // claude.ai 웹 세션 쿠키(sessionKey)를 붙여넣은 경우: OAuth 대신 웹 API 사용
         if Self.isWebSession(credential) {
             return try await Self.fetchViaWeb(sessionKey: Self.extractSessionKey(credential))
         }
 
+        // 고정된 로그인(프로필) — Claude Code의 현재 로그인과 무관하게 자체 토큰으로 조회
+        if ClaudeProfile.isProfile(credential) {
+            guard let profile = ClaudeProfile.decode(credential) else {
+                throw ConnectorError.hint("저장된 Claude 로그인 정보를 읽을 수 없습니다. 계정 설정에서 '현재 로그인에 고정'을 다시 실행하세요.")
+            }
+            return try await Self.fetchViaProfile(profile, context: context)
+        }
+
         let auto = credential == Self.autoSentinel
         // 사용량 응답에는 플랜이 없을 수 있어 Claude Code 자격증명의 subscriptionType을 보조로 쓴다.
-        let credentialPlan = auto ? PlanDetection.normalize(Self.detectClaudeCodeCredentials()?.subscriptionType) : nil
+        let liveCreds = auto ? Self.detectClaudeCodeCredentials() : nil
+        let credentialPlan = PlanDetection.claudePlan(organizationType: nil,
+                                                      subscriptionType: liveCreds?.subscriptionType,
+                                                      rateLimitTier: liveCreds?.rateLimitTier)
         let token = auto ? try await Self.autoAccessToken(forceRefresh: false) : credential
         let result = try await Self.fetchUsage(token: token)
 
         switch result.code {
         case 200:
             Self.rateLimitedUntil = nil
-            return try Self.parseUsage(result.data, fallbackPlan: credentialPlan)
+            return await Self.withIdentity(token: token,
+                                           updates: try Self.parseUsage(result.data, fallbackPlan: credentialPlan),
+                                           tierHint: liveCreds?.rateLimitTier)
         case 401 where auto, 403 where auto:
             // 토큰이 거부됨 → 강제 재발급(직접 OAuth → claude CLI) 후 1회 재시도.
             let freshToken = try await Self.autoAccessToken(forceRefresh: true)
@@ -72,7 +94,9 @@ struct ClaudeConnector: QuotaConnector {
                 throw ConnectorError.hint("인증 실패(\(retry.code)). 토큰을 재발급했지만 사용량 조회가 거부됐습니다. Claude Code를 한 번 실행해 로그인 상태를 확인하세요.")
             }
             Self.rateLimitedUntil = nil
-            return try Self.parseUsage(retry.data, fallbackPlan: credentialPlan)
+            return await Self.withIdentity(token: freshToken,
+                                           updates: try Self.parseUsage(retry.data, fallbackPlan: credentialPlan),
+                                           tierHint: liveCreds?.rateLimitTier)
         case 401, 403:
             throw ConnectorError.hint("인증 실패(\(result.code)). 토큰이 만료됐거나 잘못되었습니다. 계정 설정에서 '자동 감지 사용'을 누르면 Claude Code 자격증명을 매번 다시 읽고 만료 시 자동 재발급합니다.")
         case 429:
@@ -111,6 +135,217 @@ struct ClaudeConnector: QuotaConnector {
     private static func rateLimitHint(until: Date) -> String {
         let minutes = max(1, Int(ceil(until.timeIntervalSinceNow / 60)))
         return "요청이 제한되었습니다(429). 계속 재시도하면 제한이 더 길어질 수 있어 약 \(minutes)분 쉬었다가 자동으로 다시 시도합니다."
+    }
+
+    // MARK: - 고정된 로그인(프로필) 경로
+
+    /// 지금 Claude Code에 로그인된 계정의 자격증명을 복사해 "고정된 로그인" 프로필을 만든다.
+    /// 만료된 토큰이면 먼저 재발급하고, 어느 계정/조직인지(`/api/oauth/profile`)도 함께 기록한다.
+    static func captureCurrentLogin() async throws -> ClaudeProfile {
+        guard var creds = detectClaudeCodeCredentials(force: true) else {
+            throw ConnectorError.hint("Claude Code 자격증명을 찾지 못했습니다. 터미널에서 `claude`를 실행해 로그인돼 있는지 확인하세요.")
+        }
+        if (creds.expiresAt ?? .distantFuture) <= Date().addingTimeInterval(60) {
+            reissueDiag = nil
+            guard let fresh = await reissueToken(from: creds) else {
+                throw ConnectorError.hint("Claude Code 토큰이 만료됐고 재발급에 실패했습니다. (\(reissueDiag ?? "원인 불명")) Claude Code를 한 번 실행해 로그인 상태를 갱신한 뒤 다시 시도하세요.")
+            }
+            creds = fresh
+        }
+        let identity = await identity(forToken: creds.accessToken)
+        return ClaudeProfile(accessToken: creds.accessToken,
+                             refreshToken: creds.refreshToken,
+                             expiresAt: creds.expiresAt,
+                             subscriptionType: creds.subscriptionType,
+                             rateLimitTier: creds.rateLimitTier,
+                             identity: identity,
+                             capturedAt: Date())
+    }
+
+    /// 현재 Claude Code 로그인이 어느 계정/조직인지 (표시용). 자격증명이 없으면 nil.
+    static func currentLoginIdentity() async -> ClaudeIdentity? {
+        guard let creds = detectClaudeCodeCredentials(),
+              (creds.expiresAt ?? .distantFuture) > Date() else { return nil }
+        return await identity(forToken: creds.accessToken)
+    }
+
+    private static func fetchViaProfile(_ stored: ClaudeProfile, context: ConnectorContext?) async throws -> [QuotaUpdate] {
+        var profile = stored
+
+        // (1) Claude Code가 같은 조직에 더 새 토큰으로 로그인돼 있으면 그 토큰을 채택한다
+        //     (사용자가 이 계정으로 다시 로그인한 경우 — 오래된 사본 대신 최신 세션을 따라간다).
+        if let adopted = await adoptLiveLogin(into: profile, requireNewer: true) {
+            profile = adopted
+            await context?.persistCredential(profile.encodedCredential)
+        }
+
+        // (2) 만료(60초 전부터)면 자체 refresh token으로 갱신한다.
+        if (profile.expiresAt ?? .distantFuture) <= Date().addingTimeInterval(60) {
+            profile = try await refreshProfile(profile, context: context)
+        }
+
+        var result = try await fetchUsage(token: profile.accessToken)
+        if result.code == 401 || result.code == 403 {
+            // 토큰 거부 → 강제 갱신 후 1회 재시도.
+            profile = try await refreshProfile(profile, context: context)
+            result = try await fetchUsage(token: profile.accessToken)
+        }
+
+        switch result.code {
+        case 200:
+            rateLimitedUntil = nil
+            // 계정/조직 정보가 없는 오래된 프로필은 한 번 보강해 둔다(같은 조직 판별에 필요).
+            if profile.identity == nil, let identity = await identity(forToken: profile.accessToken) {
+                profile.identity = identity
+                await context?.persistCredential(profile.encodedCredential)
+            }
+            let plan = PlanDetection.claudePlan(organizationType: profile.identity?.organizationType,
+                                                subscriptionType: profile.subscriptionType,
+                                                rateLimitTier: profile.rateLimitTier ?? profile.identity?.rateLimitTier)
+            let updates = try parseUsage(result.data, fallbackPlan: plan)
+            return attach(identity: profile.identity, to: updates)
+        case 401, 403:
+            throw ConnectorError.hint("고정된 로그인이 거부됐습니다(\(result.code)). Claude Code에서 이 계정으로 로그인한 뒤 계정 설정에서 '현재 로그인에 고정'을 다시 누르세요.")
+        case 429:
+            let until = cooldownDate(from: result.response)
+            rateLimitedUntil = until
+            throw ConnectorError.hint(rateLimitHint(until: until))
+        default:
+            throw ConnectorError.network("HTTP \(result.code)")
+        }
+    }
+
+    /// 프로필의 refresh token으로 토큰을 갱신하고 바로 저장한다. 갱신이 거부되면
+    /// (토큰 폐기 등) 현재 Claude Code 로그인이 같은 조직일 때 그 토큰을 채택한다.
+    private static func refreshProfile(_ profile: ClaudeProfile, context: ConnectorContext?) async throws -> ClaudeProfile {
+        reissueDiag = nil
+        lastRefreshHTTPStatus = nil
+        if let previousRefresh = profile.refreshToken, !previousRefresh.isEmpty,
+           let refreshed = await refreshViaOAuth(profile.credentials) {
+            var updated = profile
+            updated.accessToken = refreshed.accessToken
+            updated.refreshToken = refreshed.refreshToken
+            updated.expiresAt = refreshed.expiresAt
+            // Claude Code가 아직 같은 세션(같은 refresh token)을 쓰고 있다면 회전된 토큰을 거기에도 반영해
+            // Claude Code의 로그인이 깨지지 않게 한다. 다른 세션이면 건드리지 않는다.
+            syncRotatedTokensToLiveSource(previousRefreshToken: previousRefresh, refreshed: refreshed)
+            await context?.persistCredential(updated.encodedCredential)
+            return updated
+        }
+
+        if let adopted = await adoptLiveLogin(into: profile, requireNewer: false) {
+            await context?.persistCredential(adopted.encodedCredential)
+            return adopted
+        }
+
+        let who = profile.identity?.label ?? "이 계정"
+        if profile.refreshToken?.isEmpty ?? true {
+            throw ConnectorError.hint("고정된 로그인(\(who))의 토큰이 만료됐고 refresh 토큰이 없습니다. Claude Code에서 이 계정으로 로그인한 뒤 계정 설정에서 '현재 로그인에 고정'을 다시 누르세요.")
+        }
+        if [400, 401, 403].contains(lastRefreshHTTPStatus ?? 0) {
+            throw ConnectorError.hint("고정된 로그인(\(who))이 더 이상 유효하지 않습니다(토큰이 폐기됨). Claude Code에서 이 계정으로 로그인하면 자동으로 다시 연결되고, 계정 설정의 '현재 로그인에 고정'으로도 복구할 수 있습니다.")
+        }
+        throw ConnectorError.hint("고정된 로그인(\(who)) 토큰 갱신에 실패했습니다. (\(reissueDiag ?? "원인 불명"))")
+    }
+
+    /// 현재 Claude Code 로그인이 프로필과 같은 조직이면 그 토큰을 프로필에 채택한다.
+    /// `requireNewer`면 Claude Code 토큰의 만료가 더 늦을 때만 채택한다.
+    private static func adoptLiveLogin(into profile: ClaudeProfile, requireNewer: Bool) async -> ClaudeProfile? {
+        guard let live = detectClaudeCodeCredentials(force: true),
+              (live.expiresAt ?? .distantFuture) > Date(),
+              live.accessToken != profile.accessToken else { return nil }
+        if requireNewer, let liveExpiry = live.expiresAt, let mine = profile.expiresAt, liveExpiry <= mine {
+            return nil
+        }
+        guard let mine = profile.identity,
+              let liveIdentity = await identity(forToken: live.accessToken),
+              liveIdentity.sameOrganization(as: mine) else { return nil }
+        var updated = profile
+        updated.accessToken = live.accessToken
+        updated.refreshToken = live.refreshToken ?? profile.refreshToken
+        updated.expiresAt = live.expiresAt
+        updated.subscriptionType = live.subscriptionType ?? profile.subscriptionType
+        updated.rateLimitTier = live.rateLimitTier ?? profile.rateLimitTier
+        updated.identity = liveIdentity
+        return updated
+    }
+
+    /// 프로필이 회전시킨 토큰을, Claude Code가 아직 같은 refresh token을 쓰고 있을 때만 원본에 반영한다.
+    private static func syncRotatedTokensToLiveSource(previousRefreshToken: String, refreshed: Credentials) {
+        guard let live = detectClaudeCodeCredentials(force: true),
+              live.refreshToken == previousRefreshToken,
+              live.source != nil else { return }
+        var synced = live
+        synced.accessToken = refreshed.accessToken
+        synced.refreshToken = refreshed.refreshToken
+        synced.expiresAt = refreshed.expiresAt
+        persist(synced)
+        cachedCredentials = (synced, Date())
+    }
+
+    // MARK: - 계정/조직 식별 (/api/oauth/profile)
+
+    private static var identityCache: [String: (value: ClaudeIdentity, fetchedAt: Date)] = [:]
+    private static let identityLock = NSLock()
+
+    /// 토큰이 어느 계정/조직의 것인지 조회한다. 토큰별로 하루 캐시하므로 네트워크 호출은 토큰이 바뀔 때만 일어난다.
+    static func identity(forToken token: String) async -> ClaudeIdentity? {
+        let key = SHA256.hash(data: Data(token.utf8)).map { String(format: "%02x", $0) }.joined()
+        let cached = cachedIdentity(key)
+        if let cached, Date().timeIntervalSince(cached.fetchedAt) < 86400 {
+            return cached.value
+        }
+        let userAgent = await detectedUserAgent()
+        guard let result = try? await HTTP.getWithResponse(profileURL, headers: [
+            "Authorization": "Bearer \(token)",
+            "anthropic-beta": "oauth-2025-04-20",
+            "User-Agent": userAgent,
+            "Accept": "application/json",
+        ]), result.code == 200,
+              let json = try? JSONSerialization.jsonObject(with: result.data) as? [String: Any]
+        else { return cached?.value }
+
+        let account = json["account"] as? [String: Any]
+        let organization = json["organization"] as? [String: Any]
+        let identity = ClaudeIdentity(
+            accountUUID: account?["uuid"] as? String,
+            organizationUUID: organization?["uuid"] as? String,
+            email: (account?["email"] as? String) ?? (account?["email_address"] as? String),
+            organizationName: organization?["name"] as? String,
+            organizationType: organization?["organization_type"] as? String,
+            rateLimitTier: organization?["rate_limit_tier"] as? String)
+        guard identity.organizationUUID != nil || identity.email != nil else { return cached?.value }
+        storeIdentity(identity, key: key)
+        return identity
+    }
+
+    private static func cachedIdentity(_ key: String) -> (value: ClaudeIdentity, fetchedAt: Date)? {
+        identityLock.lock(); defer { identityLock.unlock() }
+        return identityCache[key]
+    }
+
+    private static func storeIdentity(_ identity: ClaudeIdentity, key: String) {
+        identityLock.lock(); defer { identityLock.unlock() }
+        identityCache[key] = (identity, Date())
+    }
+
+    private static func withIdentity(token: String, updates: [QuotaUpdate], tierHint: String?) async -> [QuotaUpdate] {
+        guard let identity = await identity(forToken: token) else { return updates }
+        // 조직 종류를 알면 플랜 배지를 더 정확히 (예: "Team", "Max 5x").
+        var result = updates
+        if let plan = PlanDetection.claudePlan(organizationType: identity.organizationType,
+                                               subscriptionType: nil,
+                                               rateLimitTier: tierHint ?? identity.rateLimitTier) {
+            for i in result.indices { result[i].planName = plan }
+        }
+        return attach(identity: identity, to: result)
+    }
+
+    private static func attach(identity: ClaudeIdentity?, to updates: [QuotaUpdate]) -> [QuotaUpdate] {
+        guard let identity else { return updates }
+        var result = updates
+        for i in result.indices { result[i].accountIdentity = identity.label }
+        return result
     }
 
     // MARK: - 토큰 해석 / 하이브리드 재발급
@@ -176,6 +411,8 @@ struct ClaudeConnector: QuotaConnector {
 
     /// 재발급 실패 원인 진단(사용자 안내 메시지에 노출).
     private static var reissueDiag: String?
+    /// 마지막 OAuth 갱신 요청의 HTTP 상태 (400/401이면 refresh token이 폐기된 것).
+    private static var lastRefreshHTTPStatus: Int?
     private static func appendDiag(_ msg: String) {
         reissueDiag = reissueDiag.map { $0 + "; " + msg } ?? msg
     }
@@ -197,6 +434,7 @@ struct ClaudeConnector: QuotaConnector {
             appendDiag("OAuth 갱신 요청 실패(네트워크)")
             return nil
         }
+        lastRefreshHTTPStatus = code
         guard code == 200 else {
             let snippet = String(data: data.prefix(180), encoding: .utf8)?
                 .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
@@ -296,9 +534,9 @@ struct ClaudeConnector: QuotaConnector {
 
         let plan = PlanDetection.from(json: json) ?? fallbackPlan
         var updates: [QuotaUpdate] = []
-        // 응답에 있는 윈도우만 반영한다 (플랜에 따라 Sonnet/Fable 윈도우가 없을 수 있음).
+        // 응답에 있는 윈도우만 반영한다 (플랜에 따라 Sonnet 윈도우가 없을 수 있음).
         // Opus 별도 주간 한도는 폐지돼 표시하지 않는다(레거시 seven_day_opus는 읽지 않음).
-        // Fable 주간 한도는 레거시 키가 아니라 `limits[]`(kind=weekly_scoped)로 오며, 아래에서 따로 처리한다.
+        // 모델 한정 주간 한도(Fable 등)는 레거시 키가 아니라 `limits[]`(kind=weekly_scoped)로 오며, 아래에서 따로 처리한다.
         let windows: [(key: String, name: String)] = [
             ("five_hour", "세션 (5시간)"),
             ("seven_day", "주간 (전체 모델)"),
@@ -317,18 +555,25 @@ struct ClaudeConnector: QuotaConnector {
                                        resetsAt: resetsAt, planName: plan))
         }
 
-        // 모델 한정 주간 한도: Max 플랜의 Fable만 표시한다.
+        // 모델/제품 한정 주간 한도 — 서버가 내려주는 것만 표시한다 (예: Max 플랜의 Fable 주간).
         // 형태: limits[] = { kind: "weekly_scoped", percent, resets_at, scope: { model: { display_name } } }
-        if plan == "Max", let limits = json["limits"] as? [[String: Any]] {
+        if let limits = json["limits"] as? [[String: Any]] {
             for limit in limits where (limit["kind"] as? String) == "weekly_scoped" {
-                let model = ((limit["scope"] as? [String: Any])?["model"] as? [String: Any])?["display_name"] as? String
-                guard model?.lowercased().contains("fable") == true,
-                      let percent = (limit["percent"] as? NSNumber)?.doubleValue else { continue }
-                updates.append(QuotaUpdate(key: "seven_day_fable", name: "주간 (Fable)",
+                let scope = limit["scope"] as? [String: Any]
+                let display = ((scope?["model"] as? [String: Any])?["display_name"] as? String)
+                    ?? (scope?["display_name"] as? String)
+                    ?? (scope?["name"] as? String)
+                guard let display, let percent = (limit["percent"] as? NSNumber)?.doubleValue else { continue }
+                let slug = display.lowercased()
+                    .replacingOccurrences(of: "[^a-z0-9]+", with: "_", options: .regularExpression)
+                    .trimmingCharacters(in: CharacterSet(charactersIn: "_"))
+                let key = "seven_day_\(slug)"
+                guard !slug.isEmpty, !slug.contains("opus"),
+                      !updates.contains(where: { $0.key == key }) else { continue }
+                updates.append(QuotaUpdate(key: key, name: "주간 (\(display))",
                                            used: percent, cap: 100, unit: "%",
                                            resetsAt: DateParsing.iso8601(limit["resets_at"] as? String),
                                            planName: plan))
-                break
             }
         }
 
@@ -379,7 +624,8 @@ struct ClaudeConnector: QuotaConnector {
         default: throw ConnectorError.network("HTTP \(orgCode)")
         }
         guard let orgs = try? JSONSerialization.jsonObject(with: orgData) as? [[String: Any]],
-              let orgID = orgs.first(where: { ($0["uuid"] as? String) != nil })?["uuid"] as? String else {
+              let org = orgs.first(where: { ($0["uuid"] as? String) != nil }),
+              let orgID = org["uuid"] as? String else {
             throw ConnectorError.schemaChanged("organizations 응답에 uuid 없음")
         }
         guard let url = URL(string: "https://claude.ai/api/organizations/\(orgID)/usage") else {
@@ -390,7 +636,11 @@ struct ClaudeConnector: QuotaConnector {
             if code == 429 { throw ConnectorError.rateLimited }
             throw ConnectorError.network("HTTP \(code)")
         }
-        return try parseUsage(data)
+        var updates = try parseUsage(data)
+        if let name = org["name"] as? String, !name.isEmpty {
+            for i in updates.indices { updates[i].accountIdentity = "claude.ai 세션 · \(name)" }
+        }
+        return updates
     }
 
     // MARK: - 새 토큰 영속화 (Claude Code와 동기화)
@@ -447,14 +697,7 @@ struct ClaudeConnector: QuotaConnector {
         // 빈 account의 '다른' 항목을 새로 만들어 Claude Code의 항목과 충돌할 수 있으므로,
         // 식별 불가 시 키체인은 건드리지 않는다(파일 쪽은 이미 갱신됨).
         guard let acct = (account ?? keychainAccount(service: service)), !acct.isEmpty else { return }
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/security")
-        let args = ["add-generic-password", "-U", "-s", service, "-a", acct, "-w", outStr]
-        process.arguments = args
-        process.standardOutput = Pipe()
-        process.standardError = Pipe()
-        try? process.run()
-        process.waitUntilExit()
+        Keychain.writeGenericPassword(service: service, account: acct, value: outStr)
     }
 
     /// 존재하는 키 스타일(camelCase / snake_case)을 보존하며 토큰 필드를 갱신.
@@ -537,12 +780,17 @@ struct ClaudeConnector: QuotaConnector {
         let pipe = Pipe()
         process.standardOutput = pipe
         process.standardError = Pipe()
+        process.standardInput = FileHandle.nullDevice
         do {
             try process.run()
-            process.waitUntilExit()
         } catch {
             return nil
         }
+        // 로그인 셸 초기화가 멈추면(rc 파일의 대화식 프롬프트 등) 갱신 전체가 걸리므로 10초로 제한한다.
+        let watchdog = DispatchWorkItem { if process.isRunning { process.terminate() } }
+        DispatchQueue.global().asyncAfter(deadline: .now() + 10, execute: watchdog)
+        process.waitUntilExit()
+        watchdog.cancel()
         let data = pipe.fileHandleForReading.readDataToEndOfFile()
         let path = String(data: data, encoding: .utf8)?
             .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -596,11 +844,16 @@ struct ClaudeConnector: QuotaConnector {
 
     private static func fileCredentialCandidates() -> [Credentials] {
         let home = FileManager.default.homeDirectoryForCurrentUser
-        let files = [
+        var files = [
             home.appendingPathComponent(".claude/.credentials.json"),
-            home.appendingPathComponent(".claude.json"),
             home.appendingPathComponent(".config/claude/credentials.json"),
         ]
+        // CLAUDE_CONFIG_DIR로 설정 폴더를 바꿔 쓰는 경우(계정별 폴더 분리) — GUI 앱은 셸 환경을 못 받지만
+        // launchctl/plist로 넘겨준 값이 있으면 존중한다.
+        if let dir = ProcessInfo.processInfo.environment["CLAUDE_CONFIG_DIR"], !dir.isEmpty {
+            files.insert(URL(fileURLWithPath: (dir as NSString).expandingTildeInPath)
+                            .appendingPathComponent(".credentials.json"), at: 0)
+        }
         var out: [Credentials] = []
         for path in files {
             if let raw = try? String(contentsOf: path, encoding: .utf8),
@@ -719,6 +972,7 @@ struct ClaudeConnector: QuotaConnector {
         else { return nil }
         let refresh = (oauth["refreshToken"] as? String) ?? (oauth["refresh_token"] as? String)
         let subscription = (oauth["subscriptionType"] as? String) ?? (oauth["subscription_type"] as? String)
+        let tier = (oauth["rateLimitTier"] as? String) ?? (oauth["rate_limit_tier"] as? String)
         var expiresAt: Date?
         if let ms = (oauth["expiresAt"] as? NSNumber)?.doubleValue, ms > 0 {
             expiresAt = Date(timeIntervalSince1970: ms / 1000.0)
@@ -726,6 +980,109 @@ struct ClaudeConnector: QuotaConnector {
             expiresAt = Date(timeIntervalSince1970: seconds)
         }
         return Credentials(accessToken: token, refreshToken: refresh,
-                           expiresAt: expiresAt, source: nil, subscriptionType: subscription)
+                           expiresAt: expiresAt, source: nil,
+                           subscriptionType: subscription, rateLimitTier: tier)
+    }
+}
+
+// MARK: - 계정/조직 식별 정보
+
+/// `/api/oauth/profile`에서 읽은 "이 토큰은 누구의 것인가". 같은 조직 판별과 카드 표시에 쓴다.
+struct ClaudeIdentity: Codable, Equatable {
+    var accountUUID: String?
+    var organizationUUID: String?
+    var email: String?
+    var organizationName: String?
+    /// 예: "claude_pro", "claude_max", "claude_team", "claude_enterprise"
+    var organizationType: String?
+    /// 예: "default_claude_max_5x"
+    var rateLimitTier: String?
+
+    /// 카드에 표시할 한 줄 (예: "me@example.com · TexCorps (Team)")
+    var label: String {
+        var parts: [String] = []
+        if let email, !email.isEmpty { parts.append(email) }
+        var org = organizationName ?? ""
+        if let kind = PlanDetection.claudePlan(organizationType: organizationType, subscriptionType: nil, rateLimitTier: nil) {
+            org = org.isEmpty ? kind : "\(org) (\(kind))"
+        }
+        if !org.isEmpty { parts.append(org) }
+        return parts.joined(separator: " · ")
+    }
+
+    /// 같은 계정·같은 조직의 토큰인지 (조직 UUID 기준, 계정 UUID를 알면 그것도 비교).
+    func sameOrganization(as other: ClaudeIdentity) -> Bool {
+        guard let mine = organizationUUID, let theirs = other.organizationUUID,
+              !mine.isEmpty, mine == theirs else { return false }
+        if let a = accountUUID, let b = other.accountUUID, !a.isEmpty, !b.isEmpty {
+            return a == b
+        }
+        return true
+    }
+}
+
+// MARK: - 고정된 로그인(프로필)
+
+/// QuotaBar가 자체 보관하는 Claude Code 로그인 사본. 계정 키체인 항목에
+/// `claude-profile:<base64 JSON>` 형태로 저장된다. Claude Code의 현재 로그인과 독립적으로 동작한다.
+struct ClaudeProfile: Codable {
+    static let credentialPrefix = "claude-profile:"
+
+    var accessToken: String
+    var refreshToken: String?
+    /// ms epoch (Claude Code 자격증명과 같은 단위)
+    var expiresAtMs: Double?
+    var subscriptionType: String?
+    var rateLimitTier: String?
+    var identity: ClaudeIdentity?
+    var capturedAtMs: Double
+
+    init(accessToken: String, refreshToken: String?, expiresAt: Date?, subscriptionType: String?,
+         rateLimitTier: String?, identity: ClaudeIdentity?, capturedAt: Date) {
+        self.accessToken = accessToken
+        self.refreshToken = refreshToken
+        self.expiresAtMs = expiresAt.map { $0.timeIntervalSince1970 * 1000 }
+        self.subscriptionType = subscriptionType
+        self.rateLimitTier = rateLimitTier
+        self.identity = identity
+        self.capturedAtMs = capturedAt.timeIntervalSince1970 * 1000
+    }
+
+    var expiresAt: Date? {
+        get { expiresAtMs.map { Date(timeIntervalSince1970: $0 / 1000) } }
+        set { expiresAtMs = newValue.map { $0.timeIntervalSince1970 * 1000 } }
+    }
+
+    var capturedAt: Date { Date(timeIntervalSince1970: capturedAtMs / 1000) }
+
+    var credentials: ClaudeConnector.Credentials {
+        ClaudeConnector.Credentials(accessToken: accessToken, refreshToken: refreshToken,
+                                    expiresAt: expiresAt, source: nil,
+                                    subscriptionType: subscriptionType, rateLimitTier: rateLimitTier)
+    }
+
+    /// 표시용 (예: "me@example.com · TexCorps (Team)"); 식별 정보가 없으면 캡처 시각.
+    var displayLabel: String {
+        if let identity, !identity.label.isEmpty { return identity.label }
+        return "고정된 Claude Code 로그인 (\(capturedAt.formatted(date: .abbreviated, time: .shortened)))"
+    }
+
+    /// 키체인에 저장되는 자격증명 문자열. base64라 공백/비ASCII 없이 `security` CLI를 안전하게 통과한다.
+    var encodedCredential: String {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys]
+        let data = (try? encoder.encode(self)) ?? Data()
+        return Self.credentialPrefix + data.base64EncodedString()
+    }
+
+    static func isProfile(_ credential: String) -> Bool {
+        credential.hasPrefix(credentialPrefix)
+    }
+
+    static func decode(_ credential: String) -> ClaudeProfile? {
+        guard isProfile(credential) else { return nil }
+        let body = String(credential.dropFirst(credentialPrefix.count))
+        guard let data = Data(base64Encoded: body) else { return nil }
+        return try? JSONDecoder().decode(ClaudeProfile.self, from: data)
     }
 }

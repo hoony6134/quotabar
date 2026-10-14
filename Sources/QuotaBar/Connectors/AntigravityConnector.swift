@@ -5,7 +5,7 @@ import Foundation
 struct AntigravityConnector: QuotaConnector {
     static let autoSentinel = "auto:antigravity-local"
 
-    func fetch(credential: String) async throws -> [QuotaUpdate] {
+    func fetch(credential: String, context: ConnectorContext?) async throws -> [QuotaUpdate] {
         let home = FileManager.default.homeDirectoryForCurrentUser
         let root = home.appendingPathComponent(".gemini/antigravity")
         guard FileManager.default.fileExists(atPath: root.path) else {

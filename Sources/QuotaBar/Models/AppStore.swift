@@ -105,11 +105,13 @@ final class AppStore: ObservableObject {
 
     var menuBarQuotaOptions: [MenuBarQuotaOption] {
         let quotaOptions = accounts.flatMap { account in
-            account.quotas.map { quota in
+            let siblings = accounts.filter { $0.service == account.service }.count
+            let who = siblings > 1 ? "\(account.service.displayName) (\(account.label))" : account.service.displayName
+            return account.quotas.map { quota in
                 MenuBarQuotaOption(
                     id: Self.menuBarQuotaID(accountID: account.id, quotaKey: quota.def.key),
                     service: account.service,
-                    title: "\(account.service.displayName) · \(quota.def.name)",
+                    title: "\(who) · \(quota.def.name)",
                     subtitle: account.label,
                     utilization: quota.utilization,
                     resetsAt: quota.resetsAt,
@@ -153,14 +155,16 @@ final class AppStore: ObservableObject {
     /// ("" = 키체인에 항목 없음)
     private var credentialCache: [UUID: String] = [:]
 
-    func addAccount(service: ServiceKind, label: String, credential: String?) {
+    func addAccount(service: ServiceKind, label: String, credential: String?, identity: String? = nil) {
         let trimmed = credential?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         // 센티널("auto:…")은 비밀이 아니므로 키체인에 저장하지 않는다.
         let isRealToken = !trimmed.isEmpty && trimmed != service.autoCredentialSentinel
-        let account = Account(service: service, label: label,
+        var account = Account(service: service, label: label,
                               apiSyncEnabled: service.supportsAPISync
                                 && (isRealToken || service.autoCredentialSentinel != nil),
                               quotas: DefaultQuotas.quotas(for: service))
+        account.credentialMode = Self.credentialMode(service: service, credential: isRealToken ? trimmed : nil)
+        account.detectedIdentity = identity
         if isRealToken {
             Keychain.save(trimmed, for: account.id.uuidString)
             credentialCache[account.id] = trimmed
@@ -190,16 +194,43 @@ final class AppStore: ObservableObject {
         return value.isEmpty ? nil : value
     }
 
-    func setCredential(_ value: String, for account: Account) {
+    func setCredential(_ value: String, for account: Account, identity: String? = nil) {
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
         // 빈 값/센티널은 키체인에서 제거 — 자동 감지는 키체인 없이 동작한다.
-        if trimmed.isEmpty || trimmed == account.service.autoCredentialSentinel {
-            Keychain.delete(for: account.id.uuidString)
-            credentialCache[account.id] = ""
-        } else {
+        let isRealToken = !trimmed.isEmpty && trimmed != account.service.autoCredentialSentinel
+        if isRealToken {
             Keychain.save(trimmed, for: account.id.uuidString)
             credentialCache[account.id] = trimmed
+        } else {
+            Keychain.delete(for: account.id.uuidString)
+            credentialCache[account.id] = ""
         }
+        if let index = accounts.firstIndex(where: { $0.id == account.id }) {
+            let mode = Self.credentialMode(service: account.service, credential: isRealToken ? trimmed : nil)
+            if accounts[index].credentialMode != mode || identity != nil {
+                accounts[index].credentialMode = mode
+                accounts[index].detectedIdentity = identity   // 방식이 바뀌면 다음 갱신 때 다시 감지
+            }
+        }
+    }
+
+    /// 커넥터가 회전시킨 자격증명(예: 고정된 Claude 로그인의 새 토큰)을 조용히 저장한다.
+    /// 키체인만 갱신하고 계정 상태(방식·식별 정보)는 건드리지 않는다.
+    private func persistRotatedCredential(_ value: String, accountID: UUID) {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        Keychain.save(trimmed, for: accountID.uuidString)
+        credentialCache[accountID] = trimmed
+    }
+
+    /// 자격증명 문자열이 어떤 방식인지 (키체인에 저장된 '진짜' 값만 넘긴다; nil = 센티널/없음).
+    static func credentialMode(service: ServiceKind, credential: String?) -> CredentialMode {
+        guard let credential, !credential.isEmpty else { return .auto }
+        if service == .claude {
+            if ClaudeProfile.isProfile(credential) { return .pinned }
+            if credential.hasPrefix("sessionKey=") || credential.hasPrefix("sk-ant-sid") { return .webSession }
+        }
+        return .token
     }
 
     func updateQuota(accountID: UUID, quota: QuotaItem) {
@@ -279,6 +310,8 @@ final class AppStore: ObservableObject {
     // MARK: - API 동기화
 
     func refreshAll() async {
+        // 타이머·깨어남·위젯·iPhone 요청이 겹쳐도 갱신은 한 번에 하나만 돈다(중복 네트워크/토큰 회전 방지).
+        guard !isRefreshing else { return }
         isRefreshing = true
         defer {
             let now = Date()
@@ -301,8 +334,16 @@ final class AppStore: ObservableObject {
             accounts[index].lastSyncError = ConnectorError.noCredential.errorDescription
             return
         }
+        // 구버전 데이터는 방식이 비어 있다 — 실제 사용하는 값으로 채운다.
+        let mode = Self.credentialMode(service: account.service,
+                                       credential: credential == account.service.autoCredentialSentinel ? nil : credential)
+        if accounts[index].credentialMode != mode { accounts[index].credentialMode = mode }
+
+        let context = ConnectorContext(accountID: accountID) { [weak self] value in
+            self?.persistRotatedCredential(value, accountID: accountID)
+        }
         do {
-            let updates = try await connector.fetch(credential: credential)
+            let updates = try await connector.fetch(credential: credential, context: context)
             apply(updates: updates, accountID: accountID)
         } catch {
             if let current = accounts.firstIndex(where: { $0.id == accountID }) {
@@ -329,7 +370,10 @@ final class AppStore: ObservableObject {
         for update in updates {
             if let qi = accounts[ai].quotas.firstIndex(where: { $0.def.key == update.key }) {
                 accounts[ai].quotas[qi].state.used = update.used
-                if let cap = update.cap { accounts[ai].quotas[qi].def.cap = cap }
+                // 로컬 추정 서비스(Gemini·Antigravity)는 한도를 모른 채 기본값을 돌려주므로
+                // 사용자가 편집한 한도를 덮어쓰지 않는다. 서버가 한도를 알려주는 서비스만 반영.
+                let localEstimate = accounts[ai].service == .googleAI || accounts[ai].service == .antigravity
+                if let cap = update.cap, !localEstimate { accounts[ai].quotas[qi].def.cap = cap }
                 if let unit = update.unit { accounts[ai].quotas[qi].def.unit = unit }
                 accounts[ai].quotas[qi].state.apiResetsAt = update.resetsAt
                 accounts[ai].quotas[qi].state.lastSynced = now
@@ -349,6 +393,9 @@ final class AppStore: ObservableObject {
             }
             if let planName = update.planName {
                 accounts[ai].detectedPlanName = planName
+            }
+            if let identity = update.accountIdentity, !identity.isEmpty {
+                accounts[ai].detectedIdentity = identity
             }
         }
         pruneRetiredQuotas(accountIndex: ai, updates: updates)
@@ -391,13 +438,18 @@ final class AppStore: ObservableObject {
     }
 
     private func migrateAccounts() {
-        var existingServices = Set(accounts.map(\.service))
-        for service in ServiceKind.allCases where !existingServices.contains(service) {
+        // 새 버전에서 추가된 서비스는 한 번만 기본 계정으로 깔아준다 — 사용자가 지운 계정을
+        // 매 실행마다 되살리지 않도록, 이미 깔아준 서비스 목록을 기억한다.
+        let seededKey = "seededServices"
+        var seeded = Set(UserDefaults.standard.stringArray(forKey: seededKey) ?? [])
+        if seeded.isEmpty { seeded = Set(accounts.map(\.service.rawValue)) }
+        for service in ServiceKind.allCases where !seeded.contains(service.rawValue) {
             accounts.append(Account(service: service, label: "기본",
                                     apiSyncEnabled: service.autoCredentialSentinel != nil,
                                     quotas: DefaultQuotas.quotas(for: service)))
-            existingServices.insert(service)
         }
+        seeded.formUnion(ServiceKind.allCases.map(\.rawValue))
+        UserDefaults.standard.set(Array(seeded).sorted(), forKey: seededKey)
 
         for ai in accounts.indices {
             // 폐지된 한도 / 예전 버전이 하드코딩해 둔 플랜명 정리

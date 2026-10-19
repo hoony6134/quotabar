@@ -81,20 +81,21 @@ struct WatchQuotaProvider: AppIntentTimelineProvider {
 
     /// watchOS는 페이스 편집에서 인텐트 파라미터를 직접 고르는 UI가 없고, 이 추천 목록만 컴플리케이션 목록에 보여준다.
     /// "가장 높은 사용률"은 별도의 정적 위젯(QuotaBarWatchComplication)이 맡으므로 여기선 항목별 구성만 준다.
+    /// 목록에서 빠진 구성은 페이스에서 지워지므로, 스냅샷을 잠깐 못 읽을 때(연결 끊김·재부팅 직후)는
+    /// 마지막으로 보여준 목록을 그대로 돌려준다 (WatchComplicationCatalog).
     func recommendations() -> [AppIntentRecommendation<WatchQuotaConfigIntent>] {
-        let items = WidgetSnapshot.load()?.items ?? []
+        let entries = WatchComplicationCatalog.resolve(current: WidgetSnapshot.load()?.items ?? [])
         var result: [AppIntentRecommendation<WatchQuotaConfigIntent>] = []
-        if items.count > 1 {
+        if entries.count > 1 {
             var intent = WatchQuotaConfigIntent()
             intent.rotateAll = true
             result.append(AppIntentRecommendation(intent: intent, description: "전체 순환"))
         }
-        for item in items.prefix(12) {
+        for entry in entries {
             var intent = WatchQuotaConfigIntent()
-            intent.quotaID = item.id
+            intent.quotaID = entry.id
             // 보간(\(...))이 들어간 LocalizedStringResource를 넘기면 WidgetKit이 트랩하므로 완성된 문자열을 키로 넘긴다.
-            let label = "\(item.title) · \(item.name)"
-            result.append(AppIntentRecommendation(intent: intent, description: LocalizedStringResource(stringLiteral: label)))
+            result.append(AppIntentRecommendation(intent: intent, description: LocalizedStringResource(stringLiteral: entry.label)))
         }
         return result
     }

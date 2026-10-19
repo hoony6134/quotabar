@@ -152,13 +152,17 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: QuotaBar-${{ steps.ver.outputs.version }}
-          path: dist/*
+          path: |
+            dist/QuotaBar-${{ steps.ver.outputs.version }}.dmg
+            dist/QuotaBar-${{ steps.ver.outputs.version }}.dmg.sha256
 
       - name: Publish GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/*
+          files: |
+            dist/QuotaBar-${{ steps.ver.outputs.version }}.dmg
+            dist/QuotaBar-${{ steps.ver.outputs.version }}.dmg.sha256
           generate_release_notes: true
 
       - name: Cleanup keychain and keys

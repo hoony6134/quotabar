@@ -88,6 +88,17 @@ struct AccountSettingsView: View {
 
     // MARK: - 자격증명
 
+    private func applyCapture(_ result: Result<ClaudeProfile, Error>) {
+        switch result {
+        case .success(let profile):
+            capturedProfile = profile
+            credential = profile.encodedCredential
+            captureError = nil
+        case .failure(let error):
+            captureError = error.localizedDescription
+        }
+    }
+
     @ViewBuilder
     private var credentialSection: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -135,14 +146,13 @@ struct AccountSettingsView: View {
                     }
                 }
                 if account.service == .claude {
-                    ClaudeCaptureButton(title: "현재 로그인에 고정", isCapturing: $isCapturing) { result in
-                        switch result {
-                        case .success(let profile):
-                            capturedProfile = profile
-                            credential = profile.encodedCredential
-                            captureError = nil
-                        case .failure(let error):
-                            captureError = error.localizedDescription
+                    HStack {
+                        ClaudeCaptureButton(title: "현재 로그인에 고정", isCapturing: $isCapturing,
+                                            onResult: applyCapture)
+                        let slots = ClaudeConnector.swapSlots()
+                        if !slots.isEmpty {
+                            ClaudeSwapImportMenu(slots: slots, isCapturing: $isCapturing,
+                                                 onResult: applyCapture)
                         }
                     }
                 }

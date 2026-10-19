@@ -45,19 +45,14 @@ struct AddAccountView: View {
                             }
                         }
                         if service == .claude {
-                            ClaudeCaptureButton(title: "현재 Claude Code 로그인 가져오기",
-                                                isCapturing: $isCapturing) { result in
-                                switch result {
-                                case .success(let profile):
-                                    capturedProfile = profile
-                                    credential = profile.encodedCredential
-                                    captureError = nil
-                                    detectMessage = nil
-                                    if label.isEmpty, let suggested = Self.suggestedLabel(for: profile) {
-                                        label = suggested
-                                    }
-                                case .failure(let error):
-                                    captureError = error.localizedDescription
+                            HStack {
+                                ClaudeCaptureButton(title: "현재 Claude Code 로그인 가져오기",
+                                                    isCapturing: $isCapturing,
+                                                    onResult: applyCapture)
+                                if !swapSlots.isEmpty {
+                                    ClaudeSwapImportMenu(slots: swapSlots,
+                                                         isCapturing: $isCapturing,
+                                                         onResult: applyCapture)
                                 }
                             }
                             if hasFollowingClaudeAccount {
@@ -151,6 +146,23 @@ struct AddAccountView: View {
         .quotaGlassSurface(cornerRadius: 10)
     }
 
+    private var swapSlots: [ClaudeConnector.SwapSlot] { ClaudeConnector.swapSlots() }
+
+    private func applyCapture(_ result: Result<ClaudeProfile, Error>) {
+        switch result {
+        case .success(let profile):
+            capturedProfile = profile
+            credential = profile.encodedCredential
+            captureError = nil
+            detectMessage = nil
+            if label.isEmpty, let suggested = Self.suggestedLabel(for: profile) {
+                label = suggested
+            }
+        case .failure(let error):
+            captureError = error.localizedDescription
+        }
+    }
+
     private var hasFollowingClaudeAccount: Bool {
         store.accounts.contains { $0.service == .claude && ($0.credentialMode ?? .auto) == .auto }
     }
@@ -222,5 +234,37 @@ struct ClaudeCaptureButton: View {
         }
         .disabled(isCapturing)
         .quotaGlassButton()
+    }
+}
+
+
+/// cswap(claude-swap)에 저장된 계정 중 하나를 골라 고정된 로그인으로 가져오는 메뉴.
+struct ClaudeSwapImportMenu: View {
+    let slots: [ClaudeConnector.SwapSlot]
+    @Binding var isCapturing: Bool
+    let onResult: (Result<ClaudeProfile, Error>) -> Void
+
+    var body: some View {
+        Menu("cswap에서 가져오기") {
+            ForEach(slots) { slot in
+                Button(slot.menuLabel) {
+                    isCapturing = true
+                    Task {
+                        let result: Result<ClaudeProfile, Error>
+                        do {
+                            result = .success(try await ClaudeConnector.captureSwapAccount(slot))
+                        } catch {
+                            result = .failure(error)
+                        }
+                        await MainActor.run {
+                            isCapturing = false
+                            onResult(result)
+                        }
+                    }
+                }
+            }
+        }
+        .fixedSize()
+        .disabled(isCapturing)
     }
 }

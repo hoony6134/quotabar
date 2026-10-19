@@ -143,6 +143,9 @@ struct ClaudeConnector: QuotaConnector {
     /// 만료된 토큰이면 먼저 재발급하고, 어느 계정/조직인지(`/api/oauth/profile`)도 함께 기록한다.
     static func captureCurrentLogin() async throws -> ClaudeProfile {
         guard var creds = detectClaudeCodeCredentials(force: true) else {
+            if liveLoginWasCleared() {
+                throw ConnectorError.hint("Claude Code가 로그아웃된 상태입니다(토큰이 폐기돼 Claude Code가 지웠습니다). 터미널에서 `claude` → `/login`으로 다시 로그인한 뒤 가져오세요.")
+            }
             throw ConnectorError.hint("Claude Code 자격증명을 찾지 못했습니다. 터미널에서 `claude`를 실행해 로그인돼 있는지 확인하세요.")
         }
         if (creds.expiresAt ?? .distantFuture) <= Date().addingTimeInterval(60) {
@@ -162,6 +165,39 @@ struct ClaudeConnector: QuotaConnector {
                              capturedAt: Date())
     }
 
+    /// 키체인 항목은 있는데 토큰이 비어 있는지 — refresh token이 폐기되면 Claude Code가 토큰만 지운다.
+    private static func liveLoginWasCleared() -> Bool {
+        guard let raw = runSecurityCLI(service: "Claude Code-credentials") else { return false }
+        return raw.contains("claudeAiOauth") && parse(credentialJSON: raw) == nil
+    }
+
+    /// cswap에 저장된 계정을 "고정된 로그인"으로 가져온다 — Claude Code에서 그 계정으로 전환하지 않아도 된다.
+    /// 활성 계정은 Claude Code의 현재 로그인이 원본이므로 그쪽에서 가져온다.
+    static func captureSwapAccount(_ slot: SwapSlot) async throws -> ClaudeProfile {
+        if slot.isActive { return try await captureCurrentLogin() }
+        guard let raw = readSwapBackup(slot), var creds = parse(credentialJSON: raw) else {
+            throw ConnectorError.hint("cswap 백업에서 계정 \(slot.number)의 로그인 정보를 읽지 못했습니다.")
+        }
+        if (creds.expiresAt ?? .distantFuture) <= Date().addingTimeInterval(60) {
+            reissueDiag = nil
+            guard let fresh = await refreshViaOAuth(creds) else {
+                throw ConnectorError.hint("cswap 계정 \(slot.number)의 토큰이 만료됐고 갱신에 실패했습니다. (\(reissueDiag ?? "원인 불명")) `cswap switch \(slot.number)` 후 `claude`에서 `/login`으로 다시 로그인하세요.")
+            }
+            creds = fresh
+        }
+        let identity = await identity(forToken: creds.accessToken)
+        let profile = ClaudeProfile(accessToken: creds.accessToken,
+                                    refreshToken: creds.refreshToken,
+                                    expiresAt: creds.expiresAt,
+                                    subscriptionType: creds.subscriptionType,
+                                    rateLimitTier: creds.rateLimitTier,
+                                    identity: identity,
+                                    capturedAt: Date())
+        // 갱신했다면 회전된 토큰을 cswap 백업에도 반영한다.
+        _ = reconcileWithSwap(profile)
+        return profile
+    }
+
     /// 현재 Claude Code 로그인이 어느 계정/조직인지 (표시용). 자격증명이 없으면 nil.
     static func currentLoginIdentity() async -> ClaudeIdentity? {
         guard let creds = detectClaudeCodeCredentials(),
@@ -175,6 +211,13 @@ struct ClaudeConnector: QuotaConnector {
         // (1) Claude Code가 같은 조직에 더 새 토큰으로 로그인돼 있으면 그 토큰을 채택한다
         //     (사용자가 이 계정으로 다시 로그인한 경우 — 오래된 사본 대신 최신 세션을 따라간다).
         if let adopted = await adoptLiveLogin(into: profile, requireNewer: true) {
+            profile = adopted
+            await context?.persistCredential(profile.encodedCredential)
+        }
+
+        // (1b) cswap이 이 계정을 관리하면 백업과 맞춘다 — cswap이 비활성 계정 토큰을 직접 갱신하므로
+        //      더 새 토큰이 백업에 있을 수 있고, 반대로 우리가 더 새 토큰이면 백업에 반영한다.
+        if let adopted = reconcileWithSwap(profile) {
             profile = adopted
             await context?.persistCredential(profile.encodedCredential)
         }
@@ -229,8 +272,23 @@ struct ClaudeConnector: QuotaConnector {
             // Claude Code가 아직 같은 세션(같은 refresh token)을 쓰고 있다면 회전된 토큰을 거기에도 반영해
             // Claude Code의 로그인이 깨지지 않게 한다. 다른 세션이면 건드리지 않는다.
             syncRotatedTokensToLiveSource(previousRefreshToken: previousRefresh, refreshed: refreshed)
+            // cswap 백업에도 회전된 토큰을 반영 — 안 그러면 cswap이 폐기된 refresh token을 들고 있게 된다.
+            _ = reconcileWithSwap(updated)
             await context?.persistCredential(updated.encodedCredential)
             return updated
+        }
+
+        // 자체 갱신 실패 → cswap이 먼저 회전시켰을 수 있으니 백업 토큰을 채택한다.
+        if var adopted = reconcileWithSwap(profile, preferBackup: true) {
+            if (adopted.expiresAt ?? .distantFuture) <= Date().addingTimeInterval(60),
+               let refreshed = await refreshViaOAuth(adopted.credentials) {
+                adopted.accessToken = refreshed.accessToken
+                adopted.refreshToken = refreshed.refreshToken
+                adopted.expiresAt = refreshed.expiresAt
+                _ = reconcileWithSwap(adopted)
+            }
+            await context?.persistCredential(adopted.encodedCredential)
+            return adopted
         }
 
         if let adopted = await adoptLiveLogin(into: profile, requireNewer: false) {
@@ -395,6 +453,11 @@ struct ClaudeConnector: QuotaConnector {
             cachedCredentials = (refreshed, Date())
             return refreshed
         }
+        // 폐기된 refresh token이면 claude CLI도 같은 토큰으로 갱신하다 실패할 뿐이다 —
+        // 매 갱신 주기마다 CLI를 띄워 요청을 늘리지 말고 재로그인을 안내한다.
+        if isDeadRefreshToken(latest.refreshToken) || isTokenEndpointCoolingDown {
+            return nil
+        }
         // 2) claude CLI 폴백 — Claude Code가 스스로 갱신/저장하게 한다.
         if await runClaudeCodeRefresh() {
             cachedCredentials = nil             // 디스크/키체인이 바뀌었으니 캐시 무효화.
@@ -417,10 +480,46 @@ struct ClaudeConnector: QuotaConnector {
         reissueDiag = reissueDiag.map { $0 + "; " + msg } ?? msg
     }
 
+    /// 토큰 엔드포인트가 거부한(폐기된) refresh token의 해시. 같은 토큰으로 다시 요청하지 않는다 —
+    /// 죽은 토큰으로 매 주기 재시도하면 요청만 쌓여 429를 부른다. 재로그인하면 토큰이 바뀌어 자연히 풀린다.
+    private static var deadRefreshTokens: Set<String> = []
+    /// 토큰 엔드포인트가 429를 준 뒤 다시 요청하지 않을 시각.
+    private static var tokenEndpointCooldownUntil: Date?
+    private static let refreshStateLock = NSLock()
+
+    private static func refreshTokenKey(_ token: String) -> String {
+        SHA256.hash(data: Data(token.utf8)).map { String(format: "%02x", $0) }.joined()
+    }
+
+    private static func isDeadRefreshToken(_ token: String?) -> Bool {
+        guard let token, !token.isEmpty else { return false }
+        refreshStateLock.lock(); defer { refreshStateLock.unlock() }
+        return deadRefreshTokens.contains(refreshTokenKey(token))
+    }
+
+    private static func markDeadRefreshToken(_ token: String) {
+        refreshStateLock.lock(); defer { refreshStateLock.unlock() }
+        deadRefreshTokens.insert(refreshTokenKey(token))
+    }
+
+    private static var isTokenEndpointCoolingDown: Bool {
+        refreshStateLock.lock(); defer { refreshStateLock.unlock() }
+        return (tokenEndpointCooldownUntil ?? .distantPast) > Date()
+    }
+
     /// refresh token으로 OAuth 토큰을 직접 갱신한다. 실패하면 nil.
     private static func refreshViaOAuth(_ creds: Credentials) async -> Credentials? {
         guard let refreshToken = creds.refreshToken, !refreshToken.isEmpty else {
             appendDiag("refresh token이 자격증명에 없음")
+            return nil
+        }
+        if isDeadRefreshToken(refreshToken) {
+            lastRefreshHTTPStatus = 400
+            appendDiag("이미 거부된 refresh token(재로그인 필요)")
+            return nil
+        }
+        if isTokenEndpointCoolingDown {
+            appendDiag("토큰 갱신 요청 제한(429) — 잠시 후 다시 시도")
             return nil
         }
         let body: [String: Any] = [
@@ -435,6 +534,13 @@ struct ClaudeConnector: QuotaConnector {
             return nil
         }
         lastRefreshHTTPStatus = code
+        if [400, 401, 403].contains(code) {
+            markDeadRefreshToken(refreshToken)
+        } else if code == 429 {
+            refreshStateLock.lock()
+            tokenEndpointCooldownUntil = Date().addingTimeInterval(600)
+            refreshStateLock.unlock()
+        }
         guard code == 200 else {
             let snippet = String(data: data.prefix(180), encoding: .utf8)?
                 .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
@@ -983,6 +1089,168 @@ struct ClaudeConnector: QuotaConnector {
                            expiresAt: expiresAt, source: nil,
                            subscriptionType: subscription, rateLimitTier: tier)
     }
+}
+
+// MARK: - claude-swap(cswap) 백업 연동
+
+/// cswap(claude-swap)은 계정별 Claude Code 로그인 사본을 `~/.claude-swap-backup`(인덱스)과
+/// 키체인 `claude-swap` / `account-<번호>-<이메일>`(또는 `.creds-<번호>-<이메일>.enc` 파일)에 보관하고,
+/// 비활성 계정의 토큰을 스스로 갱신한다. 고정된 로그인도 같은 refresh token 계보를 쓰므로
+/// 둘이 따로 갱신하면 서로의 refresh token을 폐기시켜 동기화가 끊긴다.
+/// 그래서 같은 계정의 cswap 백업과 프로필 중 **더 늦게 발급된(만료가 늦은) 쪽**으로 양방향 맞춘다.
+extension ClaudeConnector {
+    struct SwapSlot: Identifiable {
+        var id: String { number }
+        var number: String
+        var email: String
+        var accountUUID: String?
+        var organizationUUID: String?
+        var isActive: Bool
+
+        var organizationName: String?
+
+        var keychainAccount: String { "account-\(number)-\(email)" }
+        var menuLabel: String {
+            var text = "\(number): \(email)"
+            if let organizationName, !organizationName.isEmpty { text += " [\(organizationName)]" }
+            return isActive ? text + " (활성)" : text
+        }
+        var encURL: URL {
+            ClaudeConnector.swapBaseDir.appendingPathComponent("credentials/.creds-\(number)-\(email).enc")
+        }
+    }
+
+    static let swapService = "claude-swap"
+    static var swapBaseDir: URL {
+        FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".claude-swap-backup")
+    }
+
+    /// `sequence.json`에 등록된 cswap 계정 목록. cswap이 없으면 빈 배열.
+    static func swapSlots() -> [SwapSlot] {
+        let url = swapBaseDir.appendingPathComponent("sequence.json")
+        guard let data = try? Data(contentsOf: url),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let accounts = json["accounts"] as? [String: Any] else { return [] }
+        let active = (json["activeAccountNumber"] as? NSNumber)?.stringValue
+        return accounts.compactMap { number, value in
+            guard let info = value as? [String: Any],
+                  let email = info["email"] as? String, !email.isEmpty else { return nil }
+            return SwapSlot(number: number, email: email,
+                            accountUUID: info["uuid"] as? String,
+                            organizationUUID: info["organizationUuid"] as? String,
+                            isActive: number == active,
+                            organizationName: info["organizationName"] as? String)
+        }
+        .sorted { (Int($0.number) ?? 0) < (Int($1.number) ?? 0) }
+    }
+
+    /// 프로필과 같은 계정·조직의 cswap 슬롯.
+    static func swapSlot(for identity: ClaudeIdentity?) -> SwapSlot? {
+        guard let identity, let org = identity.organizationUUID, !org.isEmpty else { return nil }
+        return swapSlots().first { slot in
+            guard slot.organizationUUID == org else { return false }
+            if let a = slot.accountUUID, let b = identity.accountUUID, !a.isEmpty, !b.isEmpty { return a == b }
+            if let email = identity.email, !email.isEmpty {
+                return slot.email.caseInsensitiveCompare(email) == .orderedSame
+            }
+            return true
+        }
+    }
+
+    /// 슬롯 백업의 원본 JSON. cswap과 같게 `.enc` 파일이 있으면 그쪽이 우선이다.
+    private static func readSwapBackup(_ slot: SwapSlot) -> String? {
+        if let encoded = try? String(contentsOf: slot.encURL, encoding: .utf8),
+           let data = Data(base64Encoded: encoded.trimmingCharacters(in: .whitespacesAndNewlines)),
+           let raw = String(data: data, encoding: .utf8), !raw.isEmpty {
+            return raw
+        }
+        // cswap은 `/usr/bin/security`로 항목을 만들므로 같은 바이너리로 읽어야 키체인 승인 창이 뜨지 않는다.
+        let output = runSecurity(["find-generic-password", "-a", slot.keychainAccount, "-s", swapService, "-w"])
+        return output?.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty
+    }
+
+    private static func writeSwapBackup(_ slot: SwapSlot, raw: String) {
+        if FileManager.default.fileExists(atPath: slot.encURL.path) {
+            let data = Data(raw.utf8).base64EncodedString().data(using: .utf8) ?? Data()
+            try? data.write(to: slot.encURL, options: [.atomic])
+            try? FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: slot.encURL.path)
+            return
+        }
+        // 토큰이 프로세스 인자로 노출되지 않게 `security -i`의 stdin으로 넘긴다(cswap/Claude Code와 같은 방식).
+        let hex = Data(raw.utf8).map { String(format: "%02x", $0) }.joined()
+        let command = "add-generic-password -U -a \"\(slot.keychainAccount)\" -s \"\(swapService)\" -X \(hex)\n"
+        guard command.utf8.count < 4032 else { return }
+        _ = runSecurity(["-i"], stdin: command)
+    }
+
+    @discardableResult
+    private static func runSecurity(_ arguments: [String], stdin: String? = nil) -> String? {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/security")
+        process.arguments = arguments
+        let out = Pipe()
+        process.standardOutput = out
+        process.standardError = Pipe()
+        let input = Pipe()
+        if stdin != nil { process.standardInput = input }
+        do {
+            try process.run()
+            if let stdin {
+                input.fileHandleForWriting.write(Data(stdin.utf8))
+                try? input.fileHandleForWriting.close()
+            }
+            let data = out.fileHandleForReading.readDataToEndOfFile()
+            process.waitUntilExit()
+            guard process.terminationStatus == 0 else { return nil }
+            return String(data: data, encoding: .utf8)
+        } catch {
+            return nil
+        }
+    }
+
+    /// 프로필과 같은 계정의 cswap 백업을 맞춘다.
+    /// - 백업이 더 새 토큰이면(cswap이 갱신했거나 다시 로그인함) 그걸 채택해 돌려준다.
+    /// - 프로필이 더 새 토큰이면 백업에 써서 cswap이 폐기된 refresh token을 들고 있지 않게 한다.
+    /// - `preferBackup`이면(자체 갱신 실패 시) 만료와 상관없이 다른 토큰이면 채택한다.
+    /// 활성 슬롯은 Claude Code의 현재 로그인이 원본이므로 건드리지 않는다(`adoptLiveLogin`이 담당).
+    static func reconcileWithSwap(_ profile: ClaudeProfile, preferBackup: Bool = false) -> ClaudeProfile? {
+        guard let slot = swapSlot(for: profile.identity), !slot.isActive,
+              let raw = readSwapBackup(slot),
+              let backup = parse(credentialJSON: raw) else { return nil }
+        guard backup.accessToken != profile.accessToken else { return nil }
+
+        let backupExpiry = backup.expiresAt ?? .distantPast
+        let mineExpiry = profile.expiresAt ?? .distantPast
+        if preferBackup || backupExpiry > mineExpiry {
+            guard preferBackup || backupExpiry > Date() || !(backup.refreshToken ?? "").isEmpty else { return nil }
+            var updated = profile
+            updated.accessToken = backup.accessToken
+            updated.refreshToken = backup.refreshToken ?? profile.refreshToken
+            updated.expiresAt = backup.expiresAt
+            updated.subscriptionType = backup.subscriptionType ?? profile.subscriptionType
+            updated.rateLimitTier = backup.rateLimitTier ?? profile.rateLimitTier
+            return updated
+        }
+
+        // 프로필 쪽이 더 최근 발급 → cswap 백업에 반영(나머지 필드는 보존).
+        guard let data = raw.data(using: .utf8),
+              var json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
+        if var oauth = json["claudeAiOauth"] as? [String: Any] {
+            applyTokens(to: &oauth, from: profile.credentials)
+            json["claudeAiOauth"] = oauth
+        } else {
+            applyTokens(to: &json, from: profile.credentials)
+        }
+        if let out = try? JSONSerialization.data(withJSONObject: json),
+           let outStr = String(data: out, encoding: .utf8) {
+            writeSwapBackup(slot, raw: outStr)
+        }
+        return nil
+    }
+}
+
+private extension String {
+    var nilIfEmpty: String? { isEmpty ? nil : self }
 }
 
 // MARK: - 계정/조직 식별 정보

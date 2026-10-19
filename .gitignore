@@ -34,3 +34,4 @@ Config/iOS/*-Info.plist
 
 # xcodegen이 생성하는 watchOS Info.plist
 Config/watchOS/*-Info.plist
+dist/

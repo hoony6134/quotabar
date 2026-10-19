@@ -6,6 +6,7 @@ struct MenuBarView: View {
     @EnvironmentObject var store: AppStore
     @Environment(\.openWindow) private var openWindow
     @Environment(\.openSettings) private var openSettingsAction
+    @StateObject private var updater = UpdateChecker.shared
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -14,7 +15,7 @@ struct MenuBarView: View {
                     .foregroundStyle(QuotaTheme.levelColor(utilization: store.worstUtilization))
                 Text("QuotaBar")
                     .font(.headline)
-                Text(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "2.1")
+                Text(UpdateChecker.currentVersion)
                     .font(.caption2.bold())
                     .padding(.horizontal, 5).padding(.vertical, 1)
                     .background(Color.primary.opacity(0.1), in: Capsule())
@@ -92,6 +93,11 @@ struct MenuBarView: View {
                 .quotaGlassButton(prominent: true)
                 .controlSize(.small)
                 Spacer()
+                if case .available(let version, _) = updater.state {
+                    Button("v\(version) 업데이트") { updater.openDownloadPage() }
+                        .quotaGlassButton()
+                        .controlSize(.small)
+                }
                 Button("설정") { openSettings() }
                 .quotaGlassButton()
                 .controlSize(.small)

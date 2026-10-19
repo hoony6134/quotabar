@@ -53,6 +53,7 @@ final class AppStore: ObservableObject {
         observePhoneRefreshRequests()
         preventAppNap()
         observeWake()
+        Task { @MainActor in UpdateChecker.shared.checkIfNeeded() }
     }
 
     /// iPhone이 당겨서 새로고침하면 iCloud로 요청이 온다 → 즉시 갱신 후 결과를 다시 올려보낸다.

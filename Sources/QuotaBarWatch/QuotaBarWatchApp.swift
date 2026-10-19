@@ -90,9 +90,12 @@ final class WatchMirrorModel: ObservableObject {
     }
 
     /// 컴플리케이션 값과, 컴플리케이션 목록의 "한도 선택" 항목(계정·한도별)을 새 스냅샷으로 다시 만든다.
+    /// 추천 목록은 항목이 실제로 바뀌었을 때만 다시 만든다 — 빈 스냅샷으로 다시 만들면 올려 둔 컴플리케이션이 지워진다.
     static func reloadComplications() {
         WidgetCenter.shared.reloadAllTimelines()
-        WidgetCenter.shared.invalidateConfigurationRecommendations()
+        if WatchComplicationCatalog.needsInvalidation(for: WidgetSnapshot.load()?.items ?? []) {
+            WidgetCenter.shared.invalidateConfigurationRecommendations()
+        }
     }
 
     func reload() {

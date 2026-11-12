@@ -31,7 +31,8 @@ struct QuotaRow: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            GaugeBar(utilization: item.utilization, height: compact ? 5 : 7)
+            GaugeBar(utilization: item.utilization, height: compact ? 5 : 7,
+                     marker: QuotaPace.elapsed(resetsAt: item.resetsAt, window: item.def.period.windowSeconds))
             ResetCountdown(resetsAt: item.resetsAt, periodLabel: item.def.period.label)
         }
     }

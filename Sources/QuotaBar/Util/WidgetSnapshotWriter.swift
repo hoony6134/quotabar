@@ -26,7 +26,8 @@ enum WidgetSnapshotWriter {
                     colorHex: account.service.brandHex,
                     usageText: Fmt.usageLine(quota),
                     planName: account.detectedPlanName,
-                    syncError: account.lastSyncError))
+                    syncError: account.lastSyncError,
+                    windowSeconds: quota.def.period.windowSeconds))
             }
         }
         items.sort { $0.percent > $1.percent }

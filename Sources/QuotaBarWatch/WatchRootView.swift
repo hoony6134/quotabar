@@ -148,7 +148,7 @@ private struct QuotaDetailRow: View {
                         .monospacedDigit()
                         .foregroundStyle(QuotaTheme.levelColor(percent: percent))
                 }
-                QuotaBarGauge(percent: percent, height: 6)
+                QuotaBarGauge(percent: percent, height: 6, marker: item.elapsedFraction(at: context.date))
                 Text(QuotaFormat.resetText(item, now: context.date))
                     .font(.caption2)
                     .foregroundStyle(.secondary)

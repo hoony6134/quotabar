@@ -390,7 +390,7 @@ private struct ListView: View {
                         .monospacedDigit()
                         .foregroundStyle(percent >= 90 ? QuotaTheme.critical : .primary)
                 }
-                QuotaBarGauge(percent: percent, height: 5)
+                QuotaBarGauge(percent: percent, height: 5, marker: item.elapsedFraction(at: date))
                 ResetLine(item: item, date: date, size: 9)
             }
         }

@@ -206,7 +206,7 @@ struct QuotaLine: View {
                         .monospacedDigit()
                         .foregroundStyle(QuotaTheme.levelColor(percent: percent))
                 }
-                QuotaBarGauge(percent: percent, height: 8)
+                QuotaBarGauge(percent: percent, height: 8, marker: item.elapsedFraction(at: context.date))
                 HStack {
                     Text(QuotaFormat.resetText(item, now: context.date))
                     Spacer()

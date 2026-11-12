@@ -132,6 +132,18 @@ enum ResetPeriod: Codable, Hashable {
         }
     }
 
+    /// 주기 길이(초)
+    var windowSeconds: TimeInterval? {
+        switch self {
+        case .rollingHours(let h): return TimeInterval(h) * 3600
+        case .rollingDays(let d):  return TimeInterval(d) * 86400
+        case .daily:               return 86400
+        // shortcut: 한 달을 30일로 본다(눈금이 최대 하루치 어긋남), 정확히 하려면 resetsAt에서 달력으로 한 달을 뺀다
+        case .monthly:             return 30 * 86400
+        case .never:               return nil
+        }
+    }
+
     /// anchor(첫 사용 시점) 기준 다음 리셋 시각
     func nextReset(anchor: Date?, now: Date = Date(), calendar: Calendar = .current) -> Date? {
         switch self {

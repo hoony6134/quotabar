@@ -62,9 +62,10 @@ extension View {
 struct GaugeBar: View {
     let utilization: Double
     var height: CGFloat = 8
+    var marker: Double? = nil
 
     var body: some View {
-        QuotaBarGauge(percent: utilization * 100, height: height)
+        QuotaBarGauge(percent: utilization * 100, height: height, marker: marker)
             .animation(.easeOut(duration: 0.25), value: utilization)
     }
 }

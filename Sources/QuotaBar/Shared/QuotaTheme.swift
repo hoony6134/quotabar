@@ -188,6 +188,8 @@ struct QuotaRing<Center: View>: View {
 struct QuotaBarGauge: View {
     let percent: Double
     var height: CGFloat = 6
+    /// 리셋 주기에서 지금까지 흐른 비율(0...1) — 바 위에 "현재 위치" 눈금으로 그린다.
+    var marker: Double? = nil
 
     var body: some View {
         GeometryReader { geo in
@@ -197,10 +199,24 @@ struct QuotaBarGauge: View {
                 Capsule()
                     .fill(QuotaTheme.gradient(percent: percent))
                     .frame(width: max(geo.size.width * p, p > 0 ? height : 0))
+                if let marker {
+                    Rectangle()
+                        .fill(Color.primary)
+                        .frame(width: 2)
+                        .offset(x: (geo.size.width - 2) * min(max(marker, 0), 1))
+                }
             }
         }
         .frame(height: height)
         .accessibilityHidden(true)
+    }
+}
+
+enum QuotaPace {
+    /// 리셋 주기(window초) 중 지금까지 흐른 비율. 주기를 모르거나 리셋이 지났으면 nil.
+    static func elapsed(resetsAt: Date?, window: TimeInterval?, now: Date = Date()) -> Double? {
+        guard let resetsAt, let window, window > 0, resetsAt > now else { return nil }
+        return min(max(1 - resetsAt.timeIntervalSince(now) / window, 0), 1)
     }
 }
 
@@ -211,6 +227,10 @@ extension WidgetQuotaItem {
     func effectivePercent(at date: Date = Date()) -> Double {
         if let resetsAt, resetsAt <= date { return 0 }
         return min(max(percent, 0), 100)
+    }
+
+    func elapsedFraction(at date: Date = Date()) -> Double? {
+        QuotaPace.elapsed(resetsAt: resetsAt, window: windowSeconds, now: date)
     }
 
     var isResetPassed: Bool {

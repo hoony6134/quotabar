@@ -83,6 +83,8 @@ struct WidgetQuotaItem: Codable, Identifiable, Hashable {
     var syncError: String?
     /// 같은 서비스에 계정이 여럿일 때의 표시 이름 (예: "Claude · 회사"). `labelingAccounts()`가 채운다.
     var accountTitle: String?
+    /// 리셋 주기 길이(초) — 바의 "현재 위치" 눈금 계산용. 구버전 스냅샷에는 없다.
+    var windowSeconds: Double?
 
     /// "<accountID>::<quotaKey>"의 계정 부분 — 같은 서비스의 여러 계정을 구분한다.
     var accountID: String {

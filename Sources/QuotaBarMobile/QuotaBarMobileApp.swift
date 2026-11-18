@@ -14,7 +14,9 @@ struct QuotaBarMobileApp: App {
                 .preferredColorScheme(nil)
                 .onChange(of: scenePhase) { _, phase in
                     switch phase {
-                    case .active: model.reload()
+                    case .active:
+                        model.reload()
+                        Task { await model.refreshPhone() }
                     case .background: MirrorModel.scheduleBackgroundRefresh()
                     default: break
                     }
@@ -66,6 +68,14 @@ final class MirrorModel: ObservableObject {
         }
         PhoneWatchBridge.shared.activate()
         reload()
+        Task { await refreshPhone() }
+    }
+
+    /// iPhone에서 직접 로그인한 Claude 계정을 조회하고 화면·위젯·워치를 갱신한다.
+    func refreshPhone(force: Bool = false) async {
+        guard !demoMode else { return }
+        await PhoneClaudeFetcher.refreshAll(force: force)
+        reload()
     }
 
     /// iCloud(KVS)와 앱 그룹 파일 중 최신 스냅샷을 불러오고 위젯을 갱신한다.
@@ -99,8 +109,11 @@ final class MirrorModel: ObservableObject {
     static func performBackgroundSync() async {
         scheduleBackgroundRefresh()
         PhoneWatchBridge.shared.activate()
-        guard UserDefaults.standard.bool(forKey: "demoMode") == false,
-              let snapshot = await QuotaCloudSync.pull() else { return }
+        guard UserDefaults.standard.bool(forKey: "demoMode") == false else { return }
+        await PhoneClaudeFetcher.refreshAll()
+        _ = await QuotaCloudSync.pull()
+        // Mac 스냅샷과 iPhone 직접 조회 항목을 합친 값
+        guard let snapshot = WidgetSnapshot.load() else { return }
         snapshot.writeToGroupFiles()
         PhoneWatchBridge.shared.push(snapshot)
         WidgetCenter.shared.reloadAllTimelines()
@@ -113,6 +126,7 @@ final class MirrorModel: ObservableObject {
         isRefreshing = true
         let before = snapshot?.generatedAt
         QuotaCloudSync.requestRefresh()
+        await refreshPhone(force: true)
         // Mac이 응답하면 observeChanges가 reload()를 호출한다. 최대 8초 기다린다.
         for _ in 0..<16 {
             try? await Task.sleep(nanoseconds: 500_000_000)

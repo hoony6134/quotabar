@@ -98,6 +98,8 @@ struct SettingsView: View {
                     Text("쿼터가 초기화되는 시각에 알려 줍니다. Apple Watch로도 전달됩니다.")
                 }
 
+                PhoneClaudeSection()
+
                 if let snapshot = model.snapshot, snapshot.isDemo != true {
                     Section("연결된 Mac") {
                         LabeledContent("기기", value: snapshot.deviceName ?? "Mac")
@@ -107,7 +109,7 @@ struct SettingsView: View {
                 }
 
                 Section("개인정보") {
-                    Label("계정 비밀번호·토큰·쿠키는 iPhone으로 전송되지 않습니다.", systemImage: "lock.shield")
+                    Label("Mac의 계정 비밀번호·토큰·쿠키는 iPhone으로 전송되지 않습니다. iPhone에서 직접 로그인한 계정의 토큰은 이 iPhone 키체인에만 저장됩니다.", systemImage: "lock.shield")
                     Label("사용률(%)과 리셋 시각만 내 iCloud를 통해 Mac에서 iPhone으로 전달됩니다.", systemImage: "icloud")
                     Label("분석·광고·추적 SDK를 사용하지 않습니다.", systemImage: "eye.slash")
                     if let url = URL(string: "https://github.com/hoony6134/quotabar/blob/main/docs/PRIVACY.md") {

@@ -169,10 +169,45 @@ struct WidgetSnapshot: Codable {
             }
         }
         #endif
+        #if os(iOS)
+        best = mergingPhoneItems(into: best)
+        #endif
         return best?.labelingAccounts()
     }
 
     var worstPercent: Double { items.map(\.percent).max() ?? 0 }
+
+    #if os(iOS)
+    // MARK: iPhone 직접 조회 항목 (Mac 없이 iPhone에서 로그인한 Claude 계정)
+
+    /// iPhone이 직접 조회한 항목의 id 접두사 — Mac 스냅샷과 합칠 때 중복을 걸러낸다.
+    static let phoneItemPrefix = "phone-"
+
+    private static var phoneItemsURL: URL? {
+        FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: QuotaWidgetShared.appGroupID)?
+            .appendingPathComponent("phone-direct-items.json")
+    }
+
+    static func loadPhoneItems() -> [WidgetQuotaItem] {
+        guard let url = phoneItemsURL, let data = try? Data(contentsOf: url) else { return [] }
+        return (try? decoder.decode([WidgetQuotaItem].self, from: data)) ?? []
+    }
+
+    static func savePhoneItems(_ items: [WidgetQuotaItem]) {
+        guard let url = phoneItemsURL, let data = try? encoder.encode(items) else { return }
+        try? data.write(to: url, options: .atomic)
+    }
+
+    /// Mac 스냅샷(없으면 빈 스냅샷)에 iPhone 직접 조회 항목을 합친다. 앱·위젯이 같은 결과를 본다.
+    static func mergingPhoneItems(into base: WidgetSnapshot?) -> WidgetSnapshot? {
+        let phone = loadPhoneItems()
+        guard var merged = base ?? (phone.isEmpty ? nil : WidgetSnapshot(generatedAt: Date(), items: [],
+                                                                          deviceName: "iPhone")) else { return nil }
+        merged.items = (merged.items.filter { !$0.id.hasPrefix(phoneItemPrefix) } + phone)
+            .sorted { $0.percent > $1.percent }
+        return merged
+    }
+    #endif
 
     /// 계정이 둘 이상인 서비스의 항목에 `accountTitle`("Claude · 회사")을 채운다.
     /// 라벨이 겹치면 "Claude · 기본 2"처럼 순번을 붙인다. 구버전 Mac 스냅샷도 기기에서 보정된다.

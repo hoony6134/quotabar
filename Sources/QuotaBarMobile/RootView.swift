@@ -65,7 +65,7 @@ struct DashboardList: View {
                     ForEach(model.sections) { section in
                         ServiceCard(section: section)
                     }
-                    Text("사용률은 Mac의 QuotaBar가 조회해 iCloud로 전달한 값입니다.")
+                    Text("사용률은 Mac의 QuotaBar가 iCloud로 전달했거나 이 iPhone이 직접 조회한 값입니다.")
                         .font(.caption)
                         .foregroundStyle(.tertiary)
                         .multilineTextAlignment(.center)
@@ -217,7 +217,7 @@ struct QuotaLine: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 if item.syncError != nil {
-                    Label("Mac에서 마지막 조회 실패: 값이 오래됐을 수 있어요", systemImage: "exclamationmark.triangle.fill")
+                    Label(item.id.hasPrefix(WidgetSnapshot.phoneItemPrefix) ? "마지막 조회 실패: 값이 오래됐을 수 있어요" : "Mac에서 마지막 조회 실패: 값이 오래됐을 수 있어요", systemImage: "exclamationmark.triangle.fill")
                         .font(.caption2)
                         .foregroundStyle(QuotaTheme.caution)
                 }

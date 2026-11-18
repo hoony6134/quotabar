@@ -6,7 +6,7 @@ AI 구독 서비스들의 사용량 한도(쿼터)를 한 곳에서 추적하는
 ## 2.0 변경점
 
 - **Apple Watch 앱** (`QuotaBarWatch`): iCloud 미러를 직접 읽어 가장 높은 사용률 링·서비스별 한도·리셋 시각을 손목에서 확인하고 Mac에 새로고침을 요청할 수 있다. **컴플리케이션**(원형·코너·직사각형·인라인)도 제공한다 — 서비스 로고로 표시된다. 기본 "QuotaBar"는 가장 높은 사용률을, "QuotaBar 한도 선택"은 컴플리케이션 목록에서 고른 한도 하나(계정별) 또는 전체 순환(5분 간격)을 보여준다. iPhone 앱에 포함되어 배포된다.
-- **iPhone 앱 + 위젯** (`QuotaBarMobile`): Mac이 조회한 사용률을 iCloud(키-값 저장소)로 미러링. 홈 화면(S/M/L)·잠금 화면(원형/직사각형/인라인) 위젯, 당겨서 새로고침(Mac에 갱신 요청), 데모 모드(App Review/체험용). **토큰은 iPhone으로 가지 않는다.**
+- **iPhone 앱 + 위젯** (`QuotaBarMobile`): Mac이 조회한 사용률을 iCloud(키-값 저장소)로 미러링. 홈 화면(S/M/L)·잠금 화면(원형/직사각형/인라인) 위젯, 당겨서 새로고침(Mac에 갱신 요청), 데모 모드(App Review/체험용). **Mac의 토큰은 iPhone으로 가지 않는다.** 설정 → *iPhone에서 직접 조회*로 Claude 계정에 따로 로그인하면 Mac 없이 iPhone이 직접 조회한다(토큰은 그 iPhone 키체인에만 저장).
 - **조회 방식 최신화** — Claude(추가 윈도우·extra usage·claude.ai 세션 폴백), Codex(`$CODEX_HOME`·JWT 플랜·app-server 폴백), Cursor(`usage-summary`·Cursor.app 로그인 자동 감지), Copilot(에디터 로그인/`gh` 자동 감지), Gemini(Code Assist 서버 잔량 + 로컬 추정). 자세한 내용은 [docs/FETCHING.md](docs/FETCHING.md).
 - **새 디자인** — 단계 색 체계(민트→앰버→오렌지→레드)·링 게이지·요약 히어로·새 앱 아이콘, 위젯 리셋 시각에 맞춘 타임라인.
 - 배포: macOS는 Developer ID 직접 배포, **iOS는 App Store** ([docs/APP_STORE.md](docs/APP_STORE.md), [개인정보 처리방침](docs/PRIVACY.md)).
@@ -78,6 +78,7 @@ Mac 앱이 새로고침할 때마다 표시용 스냅샷(사용률·리셋 시�
 ### Claude — 자동 (팀 계정 + 개인 계정 동시 추적 가능)
 Claude 계정의 연결 방식은 세 가지다.
 - **현재 로그인 따라가기(자동 감지)** — 지금 Claude Code에 로그인된 계정을 매 갱신마다 다시 읽는다.
+- **브라우저로 로그인 (권장)** — 계정마다 Claude Code와 같은 PKCE 로그인을 따로 해서 QuotaBar 전용 토큰을 받는다. Claude Code·cswap과 refresh token을 공유하지 않아 서로 로그인을 깨뜨리지 않고, Claude Code 키체인 승인 창도 뜨지 않는다. 클라이언트 ID·엔드포인트는 설치된 Claude Code 실행파일에서 읽는다. 로그인은 약 한 달마다 다시 해야 한다.
 - **고정된 로그인** — 계정 추가 → *현재 Claude Code 로그인 가져오기*(또는 계정 설정 → *현재 로그인에 고정*)를 누르면, 로그인된 계정의 토큰 사본을 QuotaBar 키체인에 보관한다. 이후 Claude Code에서 `/login`으로 다른 계정(팀 ↔ 개인)으로 전환해도 이 계정은 계속 조회된다. 만료되면 QuotaBar가 자체 refresh token으로 갱신하고, Claude Code가 같은 조직에 더 새 토큰으로 로그인돼 있으면 그 토큰을 자동으로 채택한다.
   **팀·개인을 함께 보려면:** 기본 계정 설정에서 *현재 로그인에 고정* → Claude Code에서 다른 계정으로 `/login` → 계정 추가에서 *현재 Claude Code 로그인 가져오기*.
 - **직접 입력** — OAuth 액세스 토큰 또는 claude.ai `sessionKey` 쿠키.
@@ -88,7 +89,7 @@ Claude 계정의 연결 방식은 세 가지다.
 `api.anthropic.com/api/oauth/usage`에서 5시간 세션 / 주간(전체) / 주간(Sonnet) 사용률(%)과 리셋 시각을 받아온다. Opus 별도 한도는 폐지되어 표시하지 않으며, **Max 플랜**에서는 응답의 `limits[]`(weekly_scoped)에서 Fable 주간 한도도 함께 표시한다. 플랜은 응답 또는 Claude Code 자격증명의 `subscriptionType`에서 감지한다.
 
 **토큰 만료 시 자동 재발급(하이브리드).** Claude Code 토큰은 Claude Code가 실행될 때만 갱신되므로, 앱이 만료(또는 401/403)를 감지하면 다음 순서로 직접 재발급한다:
-1. 저장된 `refreshToken`으로 `console.anthropic.com/v1/oauth/token`에 직접 갱신 요청 (빠르고 쿼터 소모 없음)
+1. 저장된 `refreshToken`으로 `platform.claude.com/v1/oauth/token`(Claude Code에서 감지한 주소)에 직접 갱신 요청 (빠르고 쿼터 소모 없음)
 2. 실패하면 `claude` CLI를 비대화식으로 한 번 실행해 Claude Code가 스스로 갱신하게 함
 
 재발급에 성공하면 회전된 토큰을 읽어온 원본(파일/키체인)에 **다시 써서 Claude Code와 동기화**한다 — 안 그러면 refresh token 회전 때문에 Claude Code 자신의 로그인이 깨질 수 있다. (키체인이 원본이면 갱신 저장 시 키체인 접근 창이 한 번 뜰 수 있으니 **항상 허용** 권장.)

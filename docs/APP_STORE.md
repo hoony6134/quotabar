@@ -30,13 +30,14 @@
   > • 홈 화면·잠금 화면 위젯 (작게/중간/크게/원형/직사각형/인라인)
   > • 세션·주간·월간 한도와 리셋까지 남은 시간
   > • Mac의 QuotaBar와 iCloud로 자동 미러링 — 별도 계정·서버 없음
-  > • 토큰·비밀번호는 iPhone으로 전송되지 않습니다
+  > • Mac의 토큰·비밀번호는 iPhone으로 전송되지 않습니다
+  > • (선택) iPhone에서 Claude 계정에 직접 로그인하면 Mac 없이도 조회 — 토큰은 이 iPhone 키체인에만 저장
   > ※ 이 앱은 Mac용 QuotaBar와 함께 사용합니다. Mac 없이도 "데모 데이터"로 모든 화면을 둘러볼 수 있습니다.
-- **개인정보 영양 라벨:** "데이터 수집 없음" (PrivacyInfo.xcprivacy 포함: UserDefaults CA92.1 / 파일 타임스탬프 C617.1)
+- **개인정보 영양 라벨:** "데이터 수집 없음" (PrivacyInfo.xcprivacy 포함: UserDefaults CA92.1 / 파일 타임스탬프 C617.1). iPhone 직접 로그인 토큰은 기기 키체인에만 있고 사용자가 로그인한 Anthropic API로만 전송되며 개발자는 접근할 수 없다 — 개발자가 수집하는 데이터가 아니다.
 - **수출 규정:** 표준 암호화만 사용(`ITSAppUsesNonExemptEncryption = false`)
 
 ## 4. App Review 메모 (심사자에게)
-> This app mirrors usage percentages from a companion Mac app (QuotaBar for macOS, distributed outside the Mac App Store) through the user's private iCloud key-value store. No account or login is required in the iOS app.
+> This app mirrors usage percentages from a companion Mac app (QuotaBar for macOS, distributed outside the Mac App Store) through the user's private iCloud key-value store. No account or login is required in the iOS app. Optionally, a user can sign in to their own Claude account in Settings → "iPhone에서 직접 조회" (via Safari, pasting the code shown) so the iPhone fetches usage directly from Anthropic; the token stays in the device Keychain and is never sent to the developer.
 > **To review without a Mac:** open the app → tap "데모 데이터로 둘러보기" (Browse with demo data) on the first screen, or Settings → "데모 데이터 보기". All screens and the widgets (Home Screen & Lock Screen) then show sample data.
 > The app collects no personal data and contains no analytics, ads, or third-party SDKs.
 

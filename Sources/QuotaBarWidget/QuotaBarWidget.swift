@@ -82,6 +82,14 @@ struct QuotaEntry: TimelineEntry {
     let date: Date
     let snapshot: WidgetSnapshot?
     var isPlaceholder = false
+    /// 위젯 편집에서 고른 쿼터 수 (nil = 고르지 않음 → 위젯 크기별 기본 개수)
+    var selectionCount: Int? = nil
+
+    /// 이 위젯에 그릴 개수: 고른 수(없으면 기본값)를 위젯 크기의 최대치와 실제 항목 수로 자른다.
+    func shownCount(default fallback: Int, max limit: Int) -> Int {
+        let wanted = selectionCount ?? fallback
+        return Swift.max(1, Swift.min(wanted, limit, snapshot?.items.count ?? 0))
+    }
 }
 
 struct QuotaProvider: AppIntentTimelineProvider {
@@ -95,24 +103,31 @@ struct QuotaProvider: AppIntentTimelineProvider {
             return QuotaEntry(date: Date(), snapshot: .sample, isPlaceholder: true)
         }
         return QuotaEntry(date: Date(),
-                          snapshot: Self.filtered(WidgetSnapshot.load() ?? .sample, by: configuration))
+                          snapshot: Self.filtered(WidgetSnapshot.load() ?? .sample, by: configuration),
+                          selectionCount: Self.selectionCount(configuration))
     }
 
     func timeline(for configuration: QuotaWidgetConfigIntent,
                   in context: Context) async -> Timeline<QuotaEntry> {
         let now = Date()
         let snapshot = Self.filtered(WidgetSnapshot.load(), by: configuration)
-        var entries = [QuotaEntry(date: now, snapshot: snapshot)]
+        let count = Self.selectionCount(configuration)
+        var entries = [QuotaEntry(date: now, snapshot: snapshot, selectionCount: count)]
         // 리셋 시각이 지나는 순간 0%로 바뀌도록 가까운 리셋 시각마다 엔트리를 추가한다.
         let upcoming = (snapshot?.items ?? [])
             .compactMap(\.resetsAt)
             .filter { $0 > now && $0 < now.addingTimeInterval(6 * 3600) }
             .sorted()
         for date in Array(Set(upcoming)).sorted().prefix(6) {
-            entries.append(QuotaEntry(date: date.addingTimeInterval(1), snapshot: snapshot))
+            entries.append(QuotaEntry(date: date.addingTimeInterval(1), snapshot: snapshot, selectionCount: count))
         }
         // 앱이 갱신하면 reloadAllTimelines()가 호출되지만, 앱이 꺼져 있어도 15분마다 다시 읽는다.
         return Timeline(entries: entries, policy: .after(now.addingTimeInterval(15 * 60)))
+    }
+
+    static func selectionCount(_ configuration: QuotaWidgetConfigIntent) -> Int? {
+        guard let count = configuration.items?.count, count > 0 else { return nil }
+        return count
     }
 
     /// 선택된 항목만, 선택한 순서대로 남긴다. 선택이 없으면 전체(사용률 순) 그대로.
@@ -136,6 +151,7 @@ struct QuotaBarWidgetBundle: WidgetBundle {
         QuotaBarWidget()
         QuotaGaugeWidget()
         QuotaTileWidget()
+        QuotaSingleWidget()
     }
 }
 
@@ -176,7 +192,7 @@ struct QuotaGaugeWidget: Widget {
                 }
         }
         .configurationDisplayName("QuotaBar 게이지")
-        .description("사용률을 반원 게이지로 보여 줍니다. 위젯 편집에서 표시할 쿼터를 고를 수 있습니다.")
+        .description("사용률을 게이지로 보여 줍니다. 위젯 편집에서 고른 개수에 맞춰 배치가 바뀝니다.")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
 }
@@ -193,7 +209,24 @@ struct QuotaTileWidget: Widget {
                 }
         }
         .configurationDisplayName("QuotaBar 타일")
-        .description("쿼터마다 큰 숫자와 막대를 타일로 보여 줍니다.")
+        .description("쿼터마다 큰 숫자와 막대를 타일로 보여 줍니다. 위젯 편집에서 고른 개수에 맞춰 배치가 바뀝니다.")
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+    }
+}
+
+/// 쿼터 하나 — 작게(큰 숫자), 중간(가로로 긴 타일), 크게(큰 숫자)
+struct QuotaSingleWidget: Widget {
+    var body: some WidgetConfiguration {
+        AppIntentConfiguration(kind: "QuotaBarSingleWidget",
+                               intent: QuotaWidgetConfigIntent.self,
+                               provider: QuotaProvider()) { entry in
+            TileWidgetView(entry: entry, single: true)
+                .containerBackground(for: .widget) {
+                    WidgetBackdrop(snapshot: entry.snapshot, date: entry.date)
+                }
+        }
+        .configurationDisplayName("QuotaBar 단일")
+        .description("쿼터 하나를 크게 보여 줍니다. 위젯 편집에서 고른 첫 번째 쿼터(기본은 가장 높은 사용률)를 씁니다.")
         .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
 }
@@ -504,33 +537,70 @@ private struct ArcGauge: View {
             .rotationEffect(.degrees(-135))
         }
         .rotationEffect(.degrees(135))
-        .aspectRatio(1, contentMode: .fit)
     }
 }
 
-/// 게이지 하나 + 아래 제목·쿼터 이름
+/// 제목(로고 + 계정) · 쿼터 이름 두 줄
+private struct ItemCaption: View {
+    let item: WidgetQuotaItem
+    var titleSize: CGFloat = 10
+    var alignment: HorizontalAlignment = .center
+
+    var body: some View {
+        VStack(alignment: alignment, spacing: 1) {
+            HStack(spacing: 3) {
+                ServiceMark(serviceID: item.serviceID, colorHex: item.colorHex, size: titleSize + 1)
+                Text(item.title)
+                    .font(.system(size: titleSize, weight: .semibold))
+                    .lineLimit(1)
+            }
+            Text(item.name)
+                .font(.system(size: titleSize - 1))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+        }
+    }
+}
+
+/// 지름을 정한 게이지 + 아래 캡션
 private struct GaugeCell: View {
     let item: WidgetQuotaItem
     let date: Date
-    var lineWidth: CGFloat = 7
-    var fontSize: CGFloat = 18
+    let diameter: CGFloat
 
     var body: some View {
         let percent = item.effectivePercent(at: date)
-        VStack(spacing: 4) {
-            ArcGauge(percent: percent, lineWidth: lineWidth, fontSize: fontSize)
-                .frame(maxHeight: .infinity)
-            VStack(spacing: 1) {
-                HStack(spacing: 3) {
-                    ServiceMark(serviceID: item.serviceID, colorHex: item.colorHex, size: 11)
-                    Text(item.title)
-                        .font(.system(size: 10, weight: .semibold))
-                        .lineLimit(1)
-                }
-                Text(item.name)
-                    .font(.system(size: 9))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+        VStack(spacing: 5) {
+            ArcGauge(percent: percent, lineWidth: max(5, diameter * 0.085), fontSize: diameter * 0.27)
+                .frame(width: diameter, height: diameter)
+            ItemCaption(item: item, titleSize: diameter >= 100 ? 12 : 10)
+        }
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(item.title) \(item.name) \(Int(percent))퍼센트")
+    }
+}
+
+/// 게이지 하나를 크게 + 옆(또는 아래)에 자세한 정보
+private struct GaugeFeature: View {
+    let item: WidgetQuotaItem
+    let date: Date
+    let diameter: CGFloat
+    var vertical = false
+
+    var body: some View {
+        let percent = item.effectivePercent(at: date)
+        let gauge = ArcGauge(percent: percent, lineWidth: diameter * 0.09, fontSize: diameter * 0.28)
+            .frame(width: diameter, height: diameter)
+        let info = VStack(alignment: vertical ? .center : .leading, spacing: 4) {
+            ItemCaption(item: item, titleSize: 13, alignment: vertical ? .center : .leading)
+            ResetLine(item: item, date: date, size: 11)
+        }
+        Group {
+            if vertical {
+                VStack(spacing: 12) { gauge; info }
+            } else {
+                HStack(spacing: 16) { gauge; info; Spacer(minLength: 0) }
             }
         }
         .accessibilityElement(children: .combine)
@@ -538,52 +608,85 @@ private struct GaugeCell: View {
     }
 }
 
+/// 항목을 열 수에 맞춰 줄 단위로 배치
+private struct ItemGrid<Cell: View>: View {
+    let items: [WidgetQuotaItem]
+    let columns: Int
+    var spacing: CGFloat = 8
+    @ViewBuilder let cell: (WidgetQuotaItem) -> Cell
+
+    var body: some View {
+        Grid(horizontalSpacing: spacing, verticalSpacing: spacing) {
+            ForEach(Array(stride(from: 0, to: items.count, by: columns)), id: \.self) { start in
+                GridRow {
+                    ForEach(items[start..<min(start + columns, items.count)]) { cell($0) }
+                }
+            }
+        }
+    }
+}
+
+/// 게이지 수는 위젯 편집에서 고른 쿼터 수를 따른다 (안 고르면 작게 1 · 중간 3 · 크게 6).
 private struct GaugeWidgetView: View {
     @Environment(\.widgetFamily) private var family
     let entry: QuotaEntry
 
     var body: some View {
         if let snapshot = entry.snapshot, !snapshot.items.isEmpty {
-            let items = snapshot.items
             switch family {
-            case .systemSmall:
-                let top = items[0]
-                VStack(spacing: 6) {
-                    ArcGauge(percent: top.effectivePercent(at: entry.date), lineWidth: 10, fontSize: 30)
-                        .padding(.horizontal, 8)
-                        .frame(maxHeight: .infinity)
-                    VStack(spacing: 1) {
-                        HStack(spacing: 4) {
-                            ServiceMark(serviceID: top.serviceID, colorHex: top.colorHex, size: 13)
-                            Text(top.title).font(.system(size: 11, weight: .semibold)).lineLimit(1)
-                        }
-                        ResetLine(item: top, date: entry.date, size: 9)
-                    }
-                }
-            case .systemLarge:
-                VStack(spacing: 12) {
-                    header(snapshot)
-                    Grid(horizontalSpacing: 14, verticalSpacing: 14) {
-                        ForEach(Array(stride(from: 0, to: min(items.count, 6), by: 3)), id: \.self) { start in
-                            GridRow {
-                                ForEach(start..<min(start + 3, items.count, 6), id: \.self) { i in
-                                    GaugeCell(item: items[i], date: entry.date)
-                                }
-                            }
-                        }
-                    }
-                    .frame(maxHeight: .infinity)
-                }
-            default:
-                HStack(spacing: 14) {
-                    ForEach(items.prefix(3)) { item in
-                        GaugeCell(item: item, date: entry.date)
-                    }
-                }
-                .padding(.vertical, 2)
+            case .systemSmall: small(snapshot)
+            case .systemLarge: large(snapshot)
+            default: medium(snapshot)
             }
         } else {
             EmptyDataView()
+        }
+    }
+
+    @ViewBuilder
+    private func small(_ snapshot: WidgetSnapshot) -> some View {
+        let items = Array(snapshot.items.prefix(entry.shownCount(default: 1, max: 2)))
+        if items.count == 1 {
+            GaugeFeature(item: items[0], date: entry.date, diameter: 92, vertical: true)
+        } else {
+            HStack(spacing: 8) {
+                ForEach(items) { GaugeCell(item: $0, date: entry.date, diameter: 56) }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func medium(_ snapshot: WidgetSnapshot) -> some View {
+        let items = Array(snapshot.items.prefix(entry.shownCount(default: 3, max: 4)))
+        if items.count == 1 {
+            GaugeFeature(item: items[0], date: entry.date, diameter: 96)
+        } else {
+            let diameter: CGFloat = [2: 78, 3: 68, 4: 56][items.count] ?? 56
+            HStack(spacing: 10) {
+                ForEach(items) { GaugeCell(item: $0, date: entry.date, diameter: diameter) }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func large(_ snapshot: WidgetSnapshot) -> some View {
+        let items = Array(snapshot.items.prefix(entry.shownCount(default: 6, max: 6)))
+        VStack(spacing: 10) {
+            header(snapshot)
+            Spacer(minLength: 0)
+            switch items.count {
+            case 1:
+                GaugeFeature(item: items[0], date: entry.date, diameter: 160, vertical: true)
+            case 2:
+                HStack(spacing: 12) {
+                    ForEach(items) { GaugeCell(item: $0, date: entry.date, diameter: 112) }
+                }
+            case 3, 4:
+                ItemGrid(items: items, columns: 2, spacing: 16) { GaugeCell(item: $0, date: entry.date, diameter: 88) }
+            default:
+                ItemGrid(items: items, columns: 3, spacing: 16) { GaugeCell(item: $0, date: entry.date, diameter: 72) }
+            }
+            Spacer(minLength: 0)
         }
     }
 
@@ -599,71 +702,136 @@ private struct GaugeWidgetView: View {
 
 // MARK: - 타일 위젯
 
+private enum TileStyle {
+    /// 하나를 크게 (큰 숫자 + 막대 + 리셋)
+    case big
+    /// 가로로 긴 타일 (왼쪽 정보, 오른쪽 큰 숫자)
+    case wide
+    /// 기본 타일
+    case regular
+    /// 낮은 칸용 — 한 줄 제목 + 숫자, 아래 막대
+    case compact
+}
+
 private struct QuotaTile: View {
     let item: WidgetQuotaItem
     let date: Date
+    var style: TileStyle = .regular
+    /// big 스타일 숫자 크기
+    var bigNumber: CGFloat = 52
 
     var body: some View {
         let percent = item.effectivePercent(at: date)
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 4) {
-                ServiceMark(serviceID: item.serviceID, colorHex: item.colorHex, size: 12)
-                Text(item.title)
-                    .font(.system(size: 10, weight: .semibold))
-                    .lineLimit(1)
-            }
-            Text(item.name)
-                .font(.system(size: 9))
+        content(percent)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+            .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("\(item.title) \(item.name) \(Int(percent))퍼센트")
+    }
+
+    private func number(_ percent: Double, size: CGFloat) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 1) {
+            Text("\(Int(percent))")
+                .font(.system(size: size, weight: .bold, design: .rounded))
+                .monospacedDigit()
+                .minimumScaleFactor(0.5)
+                .foregroundStyle(QuotaTheme.levelColor(percent: percent))
+            Text("%")
+                .font(.system(size: max(9, size * 0.38), weight: .semibold, design: .rounded))
                 .foregroundStyle(.secondary)
-                .lineLimit(1)
-            Spacer(minLength: 0)
-            HStack(alignment: .firstTextBaseline, spacing: 1) {
-                Text("\(Int(percent))")
-                    .font(.system(size: 24, weight: .bold, design: .rounded))
-                    .monospacedDigit()
-                    .foregroundStyle(QuotaTheme.levelColor(percent: percent))
-                Text("%")
-                    .font(.system(size: 11, weight: .semibold, design: .rounded))
-                    .foregroundStyle(.secondary)
-            }
-            QuotaBarGauge(percent: percent, height: 4, marker: item.elapsedFraction(at: date))
         }
-        .padding(10)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-        .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(item.title) \(item.name) \(Int(percent))퍼센트")
+        .lineLimit(1)
+    }
+
+    @ViewBuilder
+    private func content(_ percent: Double) -> some View {
+        let marker = item.elapsedFraction(at: date)
+        switch style {
+        case .big:
+            VStack(alignment: .leading, spacing: 6) {
+                ItemCaption(item: item, titleSize: 13, alignment: .leading)
+                Spacer(minLength: 0)
+                number(percent, size: bigNumber)
+                QuotaBarGauge(percent: percent, height: 6, marker: marker)
+                ResetLine(item: item, date: date, size: 10)
+            }
+            .padding(14)
+        case .wide:
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(alignment: .center) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        ItemCaption(item: item, titleSize: 12, alignment: .leading)
+                        ResetLine(item: item, date: date, size: 10)
+                    }
+                    Spacer(minLength: 8)
+                    number(percent, size: 40)
+                }
+                QuotaBarGauge(percent: percent, height: 5, marker: marker)
+            }
+            .padding(12)
+        case .regular:
+            VStack(alignment: .leading, spacing: 4) {
+                ItemCaption(item: item, titleSize: 10, alignment: .leading)
+                Spacer(minLength: 0)
+                number(percent, size: 24)
+                QuotaBarGauge(percent: percent, height: 4, marker: marker)
+            }
+            .padding(10)
+        case .compact:
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(alignment: .firstTextBaseline, spacing: 4) {
+                    ItemCaption(item: item, titleSize: 10, alignment: .leading)
+                    Spacer(minLength: 4)
+                    number(percent, size: 17)
+                }
+                QuotaBarGauge(percent: percent, height: 3, marker: marker)
+            }
+            .padding(.horizontal, 9)
+            .padding(.vertical, 7)
+        }
     }
 }
 
+/// 타일 수는 고른 쿼터 수를 따른다 (안 고르면 작게 1 · 중간 4 · 크게 6). `single`이면 항상 하나.
 private struct TileWidgetView: View {
     @Environment(\.widgetFamily) private var family
     let entry: QuotaEntry
+    var single = false
 
     var body: some View {
         if let snapshot = entry.snapshot, !snapshot.items.isEmpty {
-            let (columns, count) = layout
-            let items = Array(snapshot.items.prefix(count))
-            Grid(horizontalSpacing: 8, verticalSpacing: 8) {
-                ForEach(Array(stride(from: 0, to: items.count, by: columns)), id: \.self) { start in
-                    GridRow {
-                        ForEach(start..<min(start + columns, items.count), id: \.self) { i in
-                            QuotaTile(item: items[i], date: entry.date)
-                        }
-                    }
+            let date = entry.date
+            switch family {
+            case .systemSmall:
+                let items = Array(snapshot.items.prefix(single ? 1 : entry.shownCount(default: 1, max: 2)))
+                if items.count == 1 {
+                    QuotaTile(item: items[0], date: date, style: .big, bigNumber: 40)
+                } else {
+                    VStack(spacing: 6) { ForEach(items) { QuotaTile(item: $0, date: date, style: .compact) } }
+                }
+            case .systemLarge:
+                let items = Array(snapshot.items.prefix(single ? 1 : entry.shownCount(default: 6, max: 6)))
+                switch items.count {
+                case 1:
+                    QuotaTile(item: items[0], date: date, style: .big, bigNumber: 84)
+                case 2:
+                    VStack(spacing: 8) { ForEach(items) { QuotaTile(item: $0, date: date, style: .wide) } }
+                default:
+                    ItemGrid(items: items, columns: 2) { QuotaTile(item: $0, date: date, style: .regular) }
+                }
+            default:
+                let items = Array(snapshot.items.prefix(single ? 1 : entry.shownCount(default: 4, max: 4)))
+                switch items.count {
+                case 1:
+                    QuotaTile(item: items[0], date: date, style: .wide)
+                case 2, 3:
+                    HStack(spacing: 8) { ForEach(items) { QuotaTile(item: $0, date: date, style: .regular) } }
+                default:
+                    ItemGrid(items: items, columns: 2) { QuotaTile(item: $0, date: date, style: .compact) }
                 }
             }
         } else {
             EmptyDataView()
-        }
-    }
-
-    /// (열 수, 최대 타일 수)
-    private var layout: (Int, Int) {
-        switch family {
-        case .systemSmall: return (1, 2)
-        case .systemLarge: return (2, 6)
-        default: return (2, 4)
         }
     }
 }

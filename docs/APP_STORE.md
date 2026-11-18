@@ -7,7 +7,7 @@
 1. Apple Developer Program 가입, Team ID 확인.
 2. `project.yml`의 번들 ID(`com.wevoid.*`)를 본인 것으로 바꾸고 `xcodegen generate`.
 3. Developer 포털 → Identifiers:
-   - `com.wevoid.quotabar.mobile`, `com.wevoid.quotabar.mobile.widget`
+   - `com.wevoid.quotabar`, `com.wevoid.quotabar.widget`
    - App Groups: `group.com.wevoid.quotabar`
    - iCloud: **Key-value storage** 활성화 (Mac 앱 `com.wevoid.quotabar` 포함 세 ID 모두 같은 KVS 컨테이너 `<TeamID>.com.wevoid.quotabar`)
 4. Xcode에서 세 타깃 모두 Team 선택 → Signing & Capabilities에 App Groups · iCloud(Key-value storage)가 보이는지 확인.
@@ -54,7 +54,7 @@
 - [ ] 번들 버전/빌드 번호 증가 (`project.yml`의 `CFBundleVersion`)
 
 ## Apple Watch 앱
-- `QuotaBarWatch` 타깃(watchOS 10+)은 iOS 앱에 임베드되어 함께 배포된다. 번들 ID `com.wevoid.quotabar.mobile.watchkitapp`.
+- `QuotaBarWatch` 타깃(watchOS 10+)은 iOS 앱에 임베드되어 함께 배포된다. 번들 ID `com.wevoid.quotabar.watchkitapp`(iPhone 앱 ID보다 한 단계만 길어야 한다).
 - iPhone과 같은 iCloud 키-값 저장소(`<TeamID>.com.wevoid.quotabar`)를 직접 읽으므로 **Watch 타깃에도 같은 iCloud KVS entitlement**가 필요하다 (Developer 포털의 App ID에 iCloud 활성화).
 - 컴플리케이션은 `QuotaBarWatchWidget` 익스텐션(번들 ID `….watchkitapp.widget`)이며, 이 타깃에도 iCloud KVS entitlement가 필요하다.
 - 스크린샷: Apple Watch 지원 크기(Ultra 410×502 등) 중 필수 사이즈 하나 이상 제출. 심사용으로 앱 첫 화면의 "데모 보기"로 모든 화면을 확인할 수 있다.

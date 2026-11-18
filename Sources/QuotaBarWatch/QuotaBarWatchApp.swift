@@ -93,10 +93,15 @@ final class WatchMirrorModel: ObservableObject {
     /// 추천 목록은 항목이 실제로 바뀌었을 때만 다시 만든다 — 빈 스냅샷으로 다시 만들면 올려 둔 컴플리케이션이 지워진다.
     static func reloadComplications() {
         WidgetCenter.shared.reloadAllTimelines()
-        if WatchComplicationCatalog.needsInvalidation(for: WidgetSnapshot.load()?.items ?? []) {
+        let items = WidgetSnapshot.load()?.items ?? []
+        // watchOS가 데이터가 오기 전에 만든 빈 목록을 캐시해 둘 수 있으니, 실행마다 데이터가 있으면 한 번은 다시 만든다.
+        if WatchComplicationCatalog.needsInvalidation(for: items) || (!didInvalidateThisLaunch && !items.isEmpty) {
+            didInvalidateThisLaunch = true
             WidgetCenter.shared.invalidateConfigurationRecommendations()
         }
     }
+
+    private static var didInvalidateThisLaunch = false
 
     func reload() {
         QuotaCloudSync.synchronize()

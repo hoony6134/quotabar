@@ -24,9 +24,42 @@ struct ClaudeConnector: QuotaConnector {
     private static let url = URL(string: "https://api.anthropic.com/api/oauth/usage")!
     private static let profileURL = URL(string: "https://api.anthropic.com/api/oauth/profile")!
 
-    // Claude Code OAuth 토큰 엔드포인트/클라이언트 (Claude Code와 동일한 값).
-    private static let oauthTokenURL = URL(string: "https://console.anthropic.com/v1/oauth/token")!
-    private static let oauthClientID = "9d1c250a-e61b-44d9-88ed-5944d1962f5e"
+    /// Claude Code의 OAuth 설정(클라이언트 ID·엔드포인트). 하드코딩하지 않고 사용자에게 설치된
+    /// Claude Code 실행파일에서 읽는다 — Anthropic이 값을 바꿔도 Claude Code 업데이트만 따라가면 된다.
+    /// 감지한 값은 iCloud로 올려 Claude Code가 없는 iPhone도 같은 값으로 로그인·갱신한다.
+    typealias OAuthConfig = ClaudeOAuth.Config
+
+    private static let oauthConfigDefaultsKey = "claudeOAuthConfig"
+    private static var cachedOAuthConfig: (value: OAuthConfig, fetchedAt: Date)?
+
+    /// 1시간 캐시. 실행파일을 못 찾거나 해석에 실패하면 마지막으로 감지한 값(UserDefaults)을 쓴다.
+    static func oauthConfig() -> OAuthConfig? {
+        if let cached = cachedOAuthConfig, Date().timeIntervalSince(cached.fetchedAt) < 3600 {
+            return cached.value
+        }
+        if let bin = locateClaudeBinary(), var config = parseOAuthConfig(binaryPath: bin) {
+            config.cliVersion = detectCLIVersionSync()
+            cachedOAuthConfig = (config, Date())
+            if let data = try? JSONEncoder().encode(config) {
+                UserDefaults.standard.set(data, forKey: oauthConfigDefaultsKey)
+            }
+            ClaudeOAuth.publish(config)
+            return config
+        }
+        guard let data = UserDefaults.standard.data(forKey: oauthConfigDefaultsKey) else { return nil }
+        return try? JSONDecoder().decode(OAuthConfig.self, from: data)
+    }
+
+    /// 번들 안의 운영 설정 객체 `{BASE_API_URL:"https://api.anthropic.com",…}` 근처만 잘라 해석한다.
+    static func parseOAuthConfig(binaryPath: String) -> OAuthConfig? {
+        guard let data = try? Data(contentsOf: URL(fileURLWithPath: binaryPath), options: .alwaysMapped),
+              let start = data.range(of: Data(#"BASE_API_URL:"https://api.anthropic.com""#.utf8)) else { return nil }
+        let window = String(decoding: data[start.lowerBound..<min(start.lowerBound + 4000, data.endIndex)], as: UTF8.self)
+        return ClaudeOAuth.parseConfig(window)
+    }
+
+    private static let missingConfigHint = "설치된 Claude Code에서 로그인 설정을 찾지 못했습니다. Claude Code를 설치(또는 업데이트)한 뒤 다시 시도하세요."
+    private static var tokenUserAgent: String { ClaudeOAuth.tokenUserAgent }
 
     /// 자격증명을 어디서 읽었는지 — 재발급 후 같은 곳에 다시 써서 Claude Code와
     /// 토큰을 동기화하기 위함(특히 refresh token이 회전되는 경우 필수).
@@ -47,6 +80,8 @@ struct ClaudeConnector: QuotaConnector {
     }
 
     func fetch(credential: String, context: ConnectorContext?) async throws -> [QuotaUpdate] {
+        // OAuth 설정을 감지해 iCloud로 올려 둔다(1시간 캐시) — iPhone이 직접 로그인·조회할 때 쓴다.
+        _ = Self.oauthConfig()
         // 429 직후엔 아예 네트워크를 타지 않는다 — 식지 않은 채로 계속 재시도하면
         // 오히려 차단이 계속 연장될 수 있다("시간이 지나도 안 풀린다"는 증상의 원인).
         if let until = Self.rateLimitedUntil, until > Date() {
@@ -137,6 +172,30 @@ struct ClaudeConnector: QuotaConnector {
         return "요청이 제한되었습니다(429). 계속 재시도하면 제한이 더 길어질 수 있어 약 \(minutes)분 쉬었다가 자동으로 다시 시도합니다."
     }
 
+    // MARK: - 브라우저 로그인 (QuotaBar 전용 토큰)
+
+    /// `claude /login`과 같은 PKCE 흐름으로 QuotaBar만의 로그인을 새로 만든다.
+    /// 별도 refresh token 계보라 Claude Code·cswap과 토큰을 공유하지 않아 서로 폐기시킬 일이 없다.
+    typealias BrowserLogin = ClaudeOAuth.PendingLogin
+
+    static func startBrowserLogin() throws -> BrowserLogin {
+        guard let config = oauthConfig() else { throw ConnectorError.hint(missingConfigHint) }
+        return try ClaudeOAuth.startLogin(config: config)
+    }
+
+    static func finishBrowserLogin(_ login: BrowserLogin, pasted: String) async throws -> ClaudeProfile {
+        let tokens = try await ClaudeOAuth.exchange(login, pasted: pasted)
+        return ClaudeProfile(accessToken: tokens.accessToken,
+                             refreshToken: tokens.refreshToken,
+                             expiresAt: tokens.expiresAt,
+                             subscriptionType: nil,
+                             rateLimitTier: nil,
+                             identity: await identity(forToken: tokens.accessToken),
+                             capturedAt: Date(),
+                             ownLineage: true)
+    }
+
+
     // MARK: - 고정된 로그인(프로필) 경로
 
     /// 지금 Claude Code에 로그인된 계정의 자격증명을 복사해 "고정된 로그인" 프로필을 만든다.
@@ -208,6 +267,8 @@ struct ClaudeConnector: QuotaConnector {
     private static func fetchViaProfile(_ stored: ClaudeProfile, context: ConnectorContext?) async throws -> [QuotaUpdate] {
         var profile = stored
 
+        // 브라우저 로그인은 자기 계보만 쓴다 — Claude Code·cswap과 맞추는 단계는 건너뛴다.
+        if profile.ownLineage != true {
         // (1) Claude Code가 같은 조직에 더 새 토큰으로 로그인돼 있으면 그 토큰을 채택한다
         //     (사용자가 이 계정으로 다시 로그인한 경우 — 오래된 사본 대신 최신 세션을 따라간다).
         if let adopted = await adoptLiveLogin(into: profile, requireNewer: true) {
@@ -220,6 +281,7 @@ struct ClaudeConnector: QuotaConnector {
         if let adopted = reconcileWithSwap(profile) {
             profile = adopted
             await context?.persistCredential(profile.encodedCredential)
+        }
         }
 
         // (2) 만료(60초 전부터)면 자체 refresh token으로 갱신한다.
@@ -247,6 +309,8 @@ struct ClaudeConnector: QuotaConnector {
                                                 rateLimitTier: profile.rateLimitTier ?? profile.identity?.rateLimitTier)
             let updates = try parseUsage(result.data, fallbackPlan: plan)
             return attach(identity: profile.identity, to: updates)
+        case 401, 403 where profile.ownLineage == true:
+            throw ConnectorError.hint("브라우저 로그인이 거부됐습니다(\(result.code)). 계정 설정에서 '브라우저로 로그인'을 다시 해 주세요.")
         case 401, 403:
             throw ConnectorError.hint("고정된 로그인이 거부됐습니다(\(result.code)). Claude Code에서 이 계정으로 로그인한 뒤 계정 설정에서 '현재 로그인에 고정'을 다시 누르세요.")
         case 429:
@@ -269,13 +333,23 @@ struct ClaudeConnector: QuotaConnector {
             updated.accessToken = refreshed.accessToken
             updated.refreshToken = refreshed.refreshToken
             updated.expiresAt = refreshed.expiresAt
-            // Claude Code가 아직 같은 세션(같은 refresh token)을 쓰고 있다면 회전된 토큰을 거기에도 반영해
-            // Claude Code의 로그인이 깨지지 않게 한다. 다른 세션이면 건드리지 않는다.
-            syncRotatedTokensToLiveSource(previousRefreshToken: previousRefresh, refreshed: refreshed)
-            // cswap 백업에도 회전된 토큰을 반영 — 안 그러면 cswap이 폐기된 refresh token을 들고 있게 된다.
-            _ = reconcileWithSwap(updated)
+            if profile.ownLineage != true {
+                // Claude Code가 아직 같은 세션(같은 refresh token)을 쓰고 있다면 회전된 토큰을 거기에도 반영해
+                // Claude Code의 로그인이 깨지지 않게 한다. 다른 세션이면 건드리지 않는다.
+                syncRotatedTokensToLiveSource(previousRefreshToken: previousRefresh, refreshed: refreshed)
+                // cswap 백업에도 회전된 토큰을 반영 — 안 그러면 cswap이 폐기된 refresh token을 들고 있게 된다.
+                _ = reconcileWithSwap(updated)
+            }
             await context?.persistCredential(updated.encodedCredential)
             return updated
+        }
+
+        let who = profile.identity?.label ?? "이 계정"
+        if profile.ownLineage == true {
+            if [400, 401, 403].contains(lastRefreshHTTPStatus ?? 0) {
+                throw ConnectorError.hint("브라우저 로그인(\(who))이 만료됐습니다. 계정 설정에서 '브라우저로 로그인'을 다시 해 주세요.")
+            }
+            throw ConnectorError.hint("브라우저 로그인(\(who)) 토큰 갱신에 실패했습니다. (\(reissueDiag ?? "원인 불명"))")
         }
 
         // 자체 갱신 실패 → cswap이 먼저 회전시켰을 수 있으니 백업 토큰을 채택한다.
@@ -296,7 +370,6 @@ struct ClaudeConnector: QuotaConnector {
             return adopted
         }
 
-        let who = profile.identity?.label ?? "이 계정"
         if profile.refreshToken?.isEmpty ?? true {
             throw ConnectorError.hint("고정된 로그인(\(who))의 토큰이 만료됐고 refresh 토큰이 없습니다. Claude Code에서 이 계정으로 로그인한 뒤 계정 설정에서 '현재 로그인에 고정'을 다시 누르세요.")
         }
@@ -522,19 +595,26 @@ struct ClaudeConnector: QuotaConnector {
             appendDiag("토큰 갱신 요청 제한(429) — 잠시 후 다시 시도")
             return nil
         }
+        guard let config = oauthConfig() else {
+            appendDiag(missingConfigHint)
+            return nil
+        }
         let body: [String: Any] = [
             "grant_type": "refresh_token",
             "refresh_token": refreshToken,
-            "client_id": oauthClientID,
+            "client_id": config.clientID,
         ]
-        guard let (data, code) = try? await HTTP.post(oauthTokenURL,
-                  headers: ["User-Agent": "anthropic", "Accept": "application/json"],
+        guard let (data, code) = try? await HTTP.post(config.tokenURL,
+                  headers: ["User-Agent": tokenUserAgent, "Accept": "application/json"],
                   jsonBody: body) else {
             appendDiag("OAuth 갱신 요청 실패(네트워크)")
             return nil
         }
         lastRefreshHTTPStatus = code
-        if [400, 401, 403].contains(code) {
+        // 서버가 grant 자체를 거부했을 때(RFC 6749 `invalid_grant`)만 죽은 토큰으로 본다 —
+        // 다른 4xx(일시 오류, client_id 거부 등)까지 죽었다고 보면 살아 있는 로그인을 버리게 된다.
+        let oauthError = (try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["error"] as? String
+        if [400, 401, 403].contains(code), oauthError == "invalid_grant" {
             markDeadRefreshToken(refreshToken)
         } else if code == 429 {
             refreshStateLock.lock()
@@ -564,19 +644,7 @@ struct ClaudeConnector: QuotaConnector {
         return updated
     }
 
-    private static func expiry(from json: [String: Any]) -> Date? {
-        if let expiresIn = (json["expires_in"] as? NSNumber)?.doubleValue, expiresIn > 0 {
-            return Date().addingTimeInterval(expiresIn)
-        }
-        if let value = (json["expires_at"] as? NSNumber)?.doubleValue, value > 0 {
-            // ms 또는 s 모두 허용.
-            return Date(timeIntervalSince1970: value > 1_000_000_000_000 ? value / 1000 : value)
-        }
-        if let ms = (json["expiresAt"] as? NSNumber)?.doubleValue, ms > 0 {
-            return Date(timeIntervalSince1970: ms / 1000)
-        }
-        return nil
-    }
+    private static func expiry(from json: [String: Any]) -> Date? { ClaudeOAuth.expiry(from: json) }
 
     private static func fetchUsage(token: String) async throws -> (data: Data, code: Int, response: HTTPURLResponse?) {
         // User-Agent가 실제 설치된 Claude Code 버전과 어긋나면 공격적으로 429가 떨어진다.
@@ -639,59 +707,11 @@ struct ClaudeConnector: QuotaConnector {
         }
 
         let plan = PlanDetection.from(json: json) ?? fallbackPlan
-        var updates: [QuotaUpdate] = []
-        // 응답에 있는 윈도우만 반영한다 (플랜에 따라 Sonnet 윈도우가 없을 수 있음).
-        // Opus 별도 주간 한도는 폐지돼 표시하지 않는다(레거시 seven_day_opus는 읽지 않음).
-        // 모델 한정 주간 한도(Fable 등)는 레거시 키가 아니라 `limits[]`(kind=weekly_scoped)로 오며, 아래에서 따로 처리한다.
-        let windows: [(key: String, name: String)] = [
-            ("five_hour", "세션 (5시간)"),
-            ("seven_day", "주간 (전체 모델)"),
-            ("seven_day_sonnet", "주간 (Sonnet)"),
-            ("seven_day_routines", "주간 (루틴)"),
-            ("seven_day_cowork", "주간 (Cowork)"),
-        ]
-
-        for window in windows {
-            // 값이 null이면(해당 윈도우 없음) 건너뛴다.
-            guard let obj = json[window.key] as? [String: Any],
-                  let utilization = (obj["utilization"] as? NSNumber)?.doubleValue else { continue }
-            let resetsAt = DateParsing.iso8601(obj["resets_at"] as? String)
-            updates.append(QuotaUpdate(key: window.key, name: window.name,
-                                       used: utilization, cap: 100, unit: "%",
-                                       resetsAt: resetsAt, planName: plan))
+        // 윈도우 해석은 iPhone 직접 조회와 공유한다 (Shared/ClaudeOAuth.swift).
+        let updates = ClaudeOAuth.parseUsageWindows(json).map {
+            QuotaUpdate(key: $0.key, name: $0.name, used: $0.percent, cap: 100, unit: "%",
+                        resetsAt: $0.resetsAt, planName: plan)
         }
-
-        // 모델/제품 한정 주간 한도 — 서버가 내려주는 것만 표시한다 (예: Max 플랜의 Fable 주간).
-        // 형태: limits[] = { kind: "weekly_scoped", percent, resets_at, scope: { model: { display_name } } }
-        if let limits = json["limits"] as? [[String: Any]] {
-            for limit in limits where (limit["kind"] as? String) == "weekly_scoped" {
-                let scope = limit["scope"] as? [String: Any]
-                let display = ((scope?["model"] as? [String: Any])?["display_name"] as? String)
-                    ?? (scope?["display_name"] as? String)
-                    ?? (scope?["name"] as? String)
-                guard let display, let percent = (limit["percent"] as? NSNumber)?.doubleValue else { continue }
-                let slug = display.lowercased()
-                    .replacingOccurrences(of: "[^a-z0-9]+", with: "_", options: .regularExpression)
-                    .trimmingCharacters(in: CharacterSet(charactersIn: "_"))
-                let key = "seven_day_\(slug)"
-                guard !slug.isEmpty, !slug.contains("opus"),
-                      !updates.contains(where: { $0.key == key }) else { continue }
-                updates.append(QuotaUpdate(key: key, name: "주간 (\(display))",
-                                           used: percent, cap: 100, unit: "%",
-                                           resetsAt: DateParsing.iso8601(limit["resets_at"] as? String),
-                                           planName: plan))
-            }
-        }
-
-        // 추가 사용량(Extra usage) — 월 한도 대비 사용률
-        if let extra = json["extra_usage"] as? [String: Any],
-           (extra["is_enabled"] as? Bool) ?? true,
-           let utilization = (extra["utilization"] as? NSNumber)?.doubleValue {
-            updates.append(QuotaUpdate(key: "extra_usage", name: "추가 사용량 (월)",
-                                       used: utilization, cap: 100, unit: "%",
-                                       resetsAt: nil, planName: plan))
-        }
-
         guard !updates.isEmpty else {
             throw ConnectorError.schemaChanged("five_hour/seven_day 필드 없음")
         }
@@ -979,10 +999,9 @@ struct ClaudeConnector: QuotaConnector {
         ]
         var out: [Credentials] = []
         for service in services {
-            // 네이티브 Security API 우선 — 접근 창이 'QuotaBar' 이름으로 떠서 한 번
-            // '항상 허용'하면 ACL에 QuotaBar가 추가돼 이후엔 무프롬프트로 읽힌다.
-            // (security CLI는 다른 앱이 만든 ACL 제한 항목을 백그라운드에서 못 읽는 경우가 많음.)
-            let raw = keychainRawViaAPI(service: service) ?? runSecurityCLI(service: service)
+            // security CLI 우선 — Claude Code가 `/usr/bin/security`로 항목을 만들어 ACL이 그 바이너리를 믿는다.
+            // 네이티브 API로 먼저 읽으면 QuotaBar 이름으로 승인 창이 뜨고, Claude Code가 항목을 다시 쓸 때마다 반복된다.
+            let raw = runSecurityCLI(service: service) ?? keychainRawViaAPI(service: service)
             if let raw, var creds = parse(credentialJSON: raw) {
                 // account는 갱신 저장 때만 필요 → 그때 조회(불필요한 키체인 프롬프트 방지).
                 creds.source = .keychain(service: service, account: nil)
@@ -1304,9 +1323,12 @@ struct ClaudeProfile: Codable {
     var rateLimitTier: String?
     var identity: ClaudeIdentity?
     var capturedAtMs: Double
+    /// true = 브라우저 로그인으로 만든 QuotaBar 전용 계보. Claude Code·cswap과 토큰을 맞추지 않는다.
+    var ownLineage: Bool?
 
     init(accessToken: String, refreshToken: String?, expiresAt: Date?, subscriptionType: String?,
-         rateLimitTier: String?, identity: ClaudeIdentity?, capturedAt: Date) {
+         rateLimitTier: String?, identity: ClaudeIdentity?, capturedAt: Date, ownLineage: Bool? = nil) {
+        self.ownLineage = ownLineage
         self.accessToken = accessToken
         self.refreshToken = refreshToken
         self.expiresAtMs = expiresAt.map { $0.timeIntervalSince1970 * 1000 }

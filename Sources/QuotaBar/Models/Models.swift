@@ -91,7 +91,7 @@ enum ServiceKind: String, Codable, CaseIterable, Identifiable {
     var authHint: String {
         switch self {
         case .claude:
-            return "'자동 감지'는 지금 Claude Code에 로그인된 계정을 따라갑니다(토큰 저장 없음). '현재 로그인 가져오기'는 로그인된 계정의 토큰 사본을 QuotaBar 키체인에 고정해, Claude Code에서 다른 계정으로 전환해도 계속 조회합니다. 팀·개인 계정을 함께 보려면 각각 로그인한 상태에서 하나씩 가져오세요. Claude Code가 없다면 claude.ai의 sessionKey 쿠키(sk-ant-sid…)를 붙여넣어도 됩니다."
+            return "'브라우저로 로그인'(권장)은 계정마다 QuotaBar 전용 로그인을 만들어 Claude Code·cswap과 충돌하지 않고, Claude Code 키체인 승인 창도 뜨지 않습니다(약 한 달마다 재로그인). '자동 감지'는 지금 Claude Code에 로그인된 계정을 따라갑니다(토큰 저장 없음). '현재 로그인 가져오기'는 로그인된 계정의 토큰 사본을 QuotaBar 키체인에 고정해, Claude Code에서 다른 계정으로 전환해도 계속 조회합니다. 팀·개인 계정을 함께 보려면 각각 로그인한 상태에서 하나씩 가져오세요. Claude Code가 없다면 claude.ai의 sessionKey 쿠키(sk-ant-sid…)를 붙여넣어도 됩니다."
         case .chatgpt:
             return "'자동 감지'는 Codex 자격증명(~/.codex/auth.json)을 실시간으로 읽어 Codex 5시간/주간 한도를 조회합니다."
         case .googleAI:

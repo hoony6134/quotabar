@@ -13,6 +13,7 @@ struct AddAccountView: View {
     @State private var capturedProfile: ClaudeProfile?
     @State private var isCapturing = false
     @State private var captureError: String?
+    @State private var browserLogin: ClaudeConnector.BrowserLogin?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -33,6 +34,11 @@ struct AddAccountView: View {
                     if let profile = capturedProfile {
                         capturedRow(profile)
                     } else {
+                        if service == .claude {
+                            ClaudeBrowserLoginButton(isCapturing: $isCapturing, pending: $browserLogin,
+                                                     onResult: applyCapture)
+                        }
+                        if browserLogin == nil {
                         HStack {
                             SecureField(tokenPlaceholder, text: $credential)
                                 .textFieldStyle(.roundedBorder)
@@ -61,6 +67,7 @@ struct AddAccountView: View {
                                     .foregroundStyle(.secondary)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
+                        }
                         }
                     }
                     if let captureError {
@@ -101,7 +108,7 @@ struct AddAccountView: View {
                     dismiss()
                 }
                 .keyboardShortcut(.defaultAction)
-                .disabled(isCapturing)
+                .disabled(isCapturing || browserLogin != nil)
                 .quotaGlassButton(prominent: true)
             }
         }
@@ -112,6 +119,7 @@ struct AddAccountView: View {
             detectMessage = nil
             capturedProfile = nil
             captureError = nil
+            browserLogin = nil
         }
     }
 
@@ -122,7 +130,7 @@ struct AddAccountView: View {
             Image(systemName: "pin.fill")
                 .foregroundStyle(ServiceKind.claude.brandColor)
             VStack(alignment: .leading, spacing: 2) {
-                Text("고정된 로그인")
+                Text(profile.ownLineage == true ? "브라우저 로그인" : "고정된 로그인")
                     .font(.caption.bold())
                 Text(profile.displayLabel)
                     .font(.caption)
@@ -198,6 +206,69 @@ struct AddAccountView: View {
             return "비워두거나 자동 감지를 누르면 매 갱신마다 로컬 자격증명/기록을 다시 읽습니다."
         }
         return "토큰은 macOS 키체인에만 저장됩니다."
+    }
+}
+
+/// "브라우저로 로그인 (권장)" — QuotaBar 전용 로그인을 만든다. 브라우저에서 승인 후 표시되는 코드를 붙여넣는다.
+struct ClaudeBrowserLoginButton: View {
+    var title = "브라우저로 로그인 (권장)"
+    @Binding var isCapturing: Bool
+    /// 진행 중인 로그인 — 부모가 이 동안 토큰 칸을 숨겨 코드를 엉뚱한 곳에 붙여넣지 않게 한다.
+    @Binding var pending: ClaudeConnector.BrowserLogin?
+    let onResult: (Result<ClaudeProfile, Error>) -> Void
+
+    @Environment(\.openURL) private var openURL
+    @State private var code = ""
+
+    var body: some View {
+        if let pending {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("브라우저에서 승인한 뒤 표시된 코드를 붙여넣으세요.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                HStack {
+                    TextField("로그인 코드", text: $code)
+                        .textFieldStyle(.roundedBorder)
+                        .onSubmit { finish(pending) }
+                    Button("확인") { finish(pending) }
+                        .disabled(code.isEmpty || isCapturing)
+                        .quotaGlassButton(prominent: true)
+                    Button("취소") { self.pending = nil; code = "" }
+                        .quotaGlassButton()
+                }
+            }
+        } else {
+            Button {
+                do {
+                    let login = try ClaudeConnector.startBrowserLogin()
+                    pending = login
+                    openURL(login.url)
+                } catch {
+                    onResult(.failure(error))
+                }
+            } label: {
+                Label(title, systemImage: "safari")
+            }
+            .disabled(isCapturing)
+            .quotaGlassButton(prominent: true)
+        }
+    }
+
+    private func finish(_ login: ClaudeConnector.BrowserLogin) {
+        isCapturing = true
+        Task {
+            let result: Result<ClaudeProfile, Error>
+            do {
+                result = .success(try await ClaudeConnector.finishBrowserLogin(login, pasted: code))
+            } catch {
+                result = .failure(error)
+            }
+            await MainActor.run {
+                isCapturing = false
+                if case .success = result { pending = nil; code = "" }
+                onResult(result)
+            }
+        }
     }
 }
 

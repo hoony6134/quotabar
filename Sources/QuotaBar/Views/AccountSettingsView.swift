@@ -12,6 +12,7 @@ struct AccountSettingsView: View {
     /// Claude: 새로 고정한 로그인 (저장을 눌러야 반영)
     @State private var capturedProfile: ClaudeProfile?
     @State private var isCapturing = false
+    @State private var browserLogin: ClaudeConnector.BrowserLogin?
     @State private var captureError: String?
     @State private var confirmDelete = false
 
@@ -72,7 +73,7 @@ struct AccountSettingsView: View {
                     dismiss()
                 }
                 .keyboardShortcut(.defaultAction)
-                .disabled(isCapturing)
+                .disabled(isCapturing || browserLogin != nil)
                 .quotaGlassButton(prominent: true)
             }
         }
@@ -135,6 +136,11 @@ struct AccountSettingsView: View {
                 .padding(8)
                 .quotaGlassSurface(cornerRadius: 8)
             } else {
+                if account.service == .claude {
+                    ClaudeBrowserLoginButton(isCapturing: $isCapturing, pending: $browserLogin,
+                                             onResult: applyCapture)
+                }
+                if browserLogin == nil {
                 HStack {
                     SecureField("토큰 (변경할 때만 입력)", text: $credential)
                         .textFieldStyle(.roundedBorder)
@@ -155,6 +161,7 @@ struct AccountSettingsView: View {
                                                  onResult: applyCapture)
                         }
                     }
+                }
                 }
             }
             if let captureError {

@@ -16,8 +16,8 @@ settings:
   base:
     SWIFT_VERSION: "5.9"
     CODE_SIGN_STYLE: Automatic
-    MARKETING_VERSION: "2.1.3"
-    CURRENT_PROJECT_VERSION: "12"
+    MARKETING_VERSION: "2.2.0"
+    CURRENT_PROJECT_VERSION: "13"
 
 targets:
   # ───────────────────────── macOS (Developer ID 직접 배포) ─────────────────────────

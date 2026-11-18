@@ -134,6 +134,8 @@ struct QuotaProvider: AppIntentTimelineProvider {
 struct QuotaBarWidgetBundle: WidgetBundle {
     var body: some Widget {
         QuotaBarWidget()
+        QuotaGaugeWidget()
+        QuotaTileWidget()
     }
 }
 
@@ -156,9 +158,43 @@ struct QuotaBarWidget: Widget {
                     WidgetBackdrop(snapshot: entry.snapshot, date: entry.date)
                 }
         }
-        .configurationDisplayName("QuotaBar")
+        .configurationDisplayName("QuotaBar 목록")
         .description("AI 구독 사용률을 한눈에. 위젯 편집에서 표시할 쿼터를 고를 수 있습니다.")
         .supportedFamilies(families)
+    }
+}
+
+/// 반원 게이지 — 작게 1개, 중간 3개, 크게 6개
+struct QuotaGaugeWidget: Widget {
+    var body: some WidgetConfiguration {
+        AppIntentConfiguration(kind: "QuotaBarGaugeWidget",
+                               intent: QuotaWidgetConfigIntent.self,
+                               provider: QuotaProvider()) { entry in
+            GaugeWidgetView(entry: entry)
+                .containerBackground(for: .widget) {
+                    WidgetBackdrop(snapshot: entry.snapshot, date: entry.date)
+                }
+        }
+        .configurationDisplayName("QuotaBar 게이지")
+        .description("사용률을 반원 게이지로 보여 줍니다. 위젯 편집에서 표시할 쿼터를 고를 수 있습니다.")
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+    }
+}
+
+/// 큰 숫자 타일 — 작게 2개, 중간 4개, 크게 6개
+struct QuotaTileWidget: Widget {
+    var body: some WidgetConfiguration {
+        AppIntentConfiguration(kind: "QuotaBarTileWidget",
+                               intent: QuotaWidgetConfigIntent.self,
+                               provider: QuotaProvider()) { entry in
+            TileWidgetView(entry: entry)
+                .containerBackground(for: .widget) {
+                    WidgetBackdrop(snapshot: entry.snapshot, date: entry.date)
+                }
+        }
+        .configurationDisplayName("QuotaBar 타일")
+        .description("쿼터마다 큰 숫자와 막대를 타일로 보여 줍니다.")
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
 }
 
@@ -352,8 +388,11 @@ private struct ListView: View {
     let maxRows: Int
     var showsRefresh = true
 
+    /// 중간 크기(3행)는 행을 두 줄로 줄이고 남는 높이를 행 사이에 고르게 나눈다.
+    private var compact: Bool { maxRows <= 3 }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 7) {
+        VStack(alignment: .leading, spacing: compact ? 0 : 7) {
             HStack(spacing: 6) {
                 Image(systemName: "gauge.with.dots.needle.67percent")
                     .font(.caption.bold())
@@ -364,11 +403,48 @@ private struct ListView: View {
                 Spacer()
                 if showsRefresh { RefreshButton() }
             }
-            ForEach(snapshot.items.prefix(maxRows)) { item in
-                row(item)
+            if compact {
+                ForEach(snapshot.items.prefix(maxRows)) { item in
+                    Spacer(minLength: 6)
+                    compactRow(item)
+                }
+                Spacer(minLength: 0)
+            } else {
+                ForEach(snapshot.items.prefix(maxRows)) { item in
+                    row(item)
+                }
+                Spacer(minLength: 0)
             }
-            Spacer(minLength: 0)
         }
+    }
+
+    @ViewBuilder
+    private func compactRow(_ item: WidgetQuotaItem) -> some View {
+        let percent = item.effectivePercent(at: date)
+        HStack(spacing: 8) {
+            ServiceMark(serviceID: item.serviceID, colorHex: item.colorHex, size: 18)
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(alignment: .firstTextBaseline, spacing: 4) {
+                    Text(item.title)
+                        .font(.system(size: 11, weight: .semibold))
+                        .lineLimit(1)
+                    Text(item.name)
+                        .font(.system(size: 10))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                    Spacer(minLength: 4)
+                    ResetLine(item: item, date: date, size: 9)
+                        .layoutPriority(-1)
+                    Text("\(Int(percent))%")
+                        .font(.system(size: 12, weight: .bold, design: .rounded))
+                        .monospacedDigit()
+                        .foregroundStyle(percent >= 90 ? QuotaTheme.critical : .primary)
+                }
+                QuotaBarGauge(percent: percent, height: 4, marker: item.elapsedFraction(at: date))
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(item.title) \(item.name) \(Int(percent))퍼센트")
     }
 
     @ViewBuilder
@@ -396,6 +472,199 @@ private struct ListView: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(item.title) \(item.name) \(Int(percent))퍼센트")
+    }
+}
+
+// MARK: - 게이지 위젯
+
+/// 아래가 트인 270° 게이지
+private struct ArcGauge: View {
+    let percent: Double
+    var lineWidth: CGFloat = 8
+    var fontSize: CGFloat = 20
+
+    var body: some View {
+        let fraction = min(max(percent, 0), 100) / 100
+        ZStack {
+            Circle()
+                .trim(from: 0, to: 0.75)
+                .stroke(Color.primary.opacity(0.12), style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+            Circle()
+                .trim(from: 0, to: 0.75 * fraction)
+                .stroke(QuotaTheme.levelColor(percent: percent), style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+            VStack(spacing: 0) {
+                Text("\(Int(percent))")
+                    .font(.system(size: fontSize, weight: .bold, design: .rounded))
+                    .monospacedDigit()
+                    .minimumScaleFactor(0.6)
+                Text("%")
+                    .font(.system(size: fontSize * 0.4, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.secondary)
+            }
+            .rotationEffect(.degrees(-135))
+        }
+        .rotationEffect(.degrees(135))
+        .aspectRatio(1, contentMode: .fit)
+    }
+}
+
+/// 게이지 하나 + 아래 제목·쿼터 이름
+private struct GaugeCell: View {
+    let item: WidgetQuotaItem
+    let date: Date
+    var lineWidth: CGFloat = 7
+    var fontSize: CGFloat = 18
+
+    var body: some View {
+        let percent = item.effectivePercent(at: date)
+        VStack(spacing: 4) {
+            ArcGauge(percent: percent, lineWidth: lineWidth, fontSize: fontSize)
+                .frame(maxHeight: .infinity)
+            VStack(spacing: 1) {
+                HStack(spacing: 3) {
+                    ServiceMark(serviceID: item.serviceID, colorHex: item.colorHex, size: 11)
+                    Text(item.title)
+                        .font(.system(size: 10, weight: .semibold))
+                        .lineLimit(1)
+                }
+                Text(item.name)
+                    .font(.system(size: 9))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(item.title) \(item.name) \(Int(percent))퍼센트")
+    }
+}
+
+private struct GaugeWidgetView: View {
+    @Environment(\.widgetFamily) private var family
+    let entry: QuotaEntry
+
+    var body: some View {
+        if let snapshot = entry.snapshot, !snapshot.items.isEmpty {
+            let items = snapshot.items
+            switch family {
+            case .systemSmall:
+                let top = items[0]
+                VStack(spacing: 6) {
+                    ArcGauge(percent: top.effectivePercent(at: entry.date), lineWidth: 10, fontSize: 30)
+                        .padding(.horizontal, 8)
+                        .frame(maxHeight: .infinity)
+                    VStack(spacing: 1) {
+                        HStack(spacing: 4) {
+                            ServiceMark(serviceID: top.serviceID, colorHex: top.colorHex, size: 13)
+                            Text(top.title).font(.system(size: 11, weight: .semibold)).lineLimit(1)
+                        }
+                        ResetLine(item: top, date: entry.date, size: 9)
+                    }
+                }
+            case .systemLarge:
+                VStack(spacing: 12) {
+                    header(snapshot)
+                    Grid(horizontalSpacing: 14, verticalSpacing: 14) {
+                        ForEach(Array(stride(from: 0, to: min(items.count, 6), by: 3)), id: \.self) { start in
+                            GridRow {
+                                ForEach(start..<min(start + 3, items.count, 6), id: \.self) { i in
+                                    GaugeCell(item: items[i], date: entry.date)
+                                }
+                            }
+                        }
+                    }
+                    .frame(maxHeight: .infinity)
+                }
+            default:
+                HStack(spacing: 14) {
+                    ForEach(items.prefix(3)) { item in
+                        GaugeCell(item: item, date: entry.date)
+                    }
+                }
+                .padding(.vertical, 2)
+            }
+        } else {
+            EmptyDataView()
+        }
+    }
+
+    private func header(_ snapshot: WidgetSnapshot) -> some View {
+        HStack(spacing: 6) {
+            Text("QuotaBar").font(.caption.bold())
+            StaleBadge(snapshot: snapshot, date: entry.date)
+            Spacer()
+            if !entry.isPlaceholder { RefreshButton() }
+        }
+    }
+}
+
+// MARK: - 타일 위젯
+
+private struct QuotaTile: View {
+    let item: WidgetQuotaItem
+    let date: Date
+
+    var body: some View {
+        let percent = item.effectivePercent(at: date)
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 4) {
+                ServiceMark(serviceID: item.serviceID, colorHex: item.colorHex, size: 12)
+                Text(item.title)
+                    .font(.system(size: 10, weight: .semibold))
+                    .lineLimit(1)
+            }
+            Text(item.name)
+                .font(.system(size: 9))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+            Spacer(minLength: 0)
+            HStack(alignment: .firstTextBaseline, spacing: 1) {
+                Text("\(Int(percent))")
+                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                    .monospacedDigit()
+                    .foregroundStyle(QuotaTheme.levelColor(percent: percent))
+                Text("%")
+                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.secondary)
+            }
+            QuotaBarGauge(percent: percent, height: 4, marker: item.elapsedFraction(at: date))
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(item.title) \(item.name) \(Int(percent))퍼센트")
+    }
+}
+
+private struct TileWidgetView: View {
+    @Environment(\.widgetFamily) private var family
+    let entry: QuotaEntry
+
+    var body: some View {
+        if let snapshot = entry.snapshot, !snapshot.items.isEmpty {
+            let (columns, count) = layout
+            let items = Array(snapshot.items.prefix(count))
+            Grid(horizontalSpacing: 8, verticalSpacing: 8) {
+                ForEach(Array(stride(from: 0, to: items.count, by: columns)), id: \.self) { start in
+                    GridRow {
+                        ForEach(start..<min(start + columns, items.count), id: \.self) { i in
+                            QuotaTile(item: items[i], date: entry.date)
+                        }
+                    }
+                }
+            }
+        } else {
+            EmptyDataView()
+        }
+    }
+
+    /// (열 수, 최대 타일 수)
+    private var layout: (Int, Int) {
+        switch family {
+        case .systemSmall: return (1, 2)
+        case .systemLarge: return (2, 6)
+        default: return (2, 4)
+        }
     }
 }
 

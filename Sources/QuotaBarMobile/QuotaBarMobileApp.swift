@@ -41,6 +41,10 @@ final class MirrorModel: ObservableObject {
         }
     }
     @Published private(set) var isRefreshing = false
+    /// iPhone에서 직접 로그인한 Claude 계정 (토큰은 키체인)
+    @Published var phoneAccounts = PhoneClaudeStore.load()
+    /// 대시보드 카드에서 연 로그인 시트 (RootView가 띄운다 — Safari를 다녀와도 닫히지 않게)
+    @Published var cardLogin: PhoneLoginRequest?
     /// 리셋 알림 (기본 꺼짐). 켜면 권한을 요청하고 스냅샷의 리셋 시각으로 예약한다.
     @Published var resetNotifications: Bool {
         didSet {
@@ -75,6 +79,7 @@ final class MirrorModel: ObservableObject {
     func refreshPhone(force: Bool = false) async {
         guard !demoMode else { return }
         await PhoneClaudeFetcher.refreshAll(force: force)
+        phoneAccounts = PhoneClaudeStore.load()
         reload()
     }
 

@@ -76,6 +76,7 @@ struct OnboardingView: View {
 struct SettingsView: View {
     @EnvironmentObject var model: MirrorModel
     @Environment(\.dismiss) private var dismiss
+    @State private var phoneLogin: PhoneLoginRequest?
 
     private var version: String {
         let v = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "2.0"
@@ -98,7 +99,7 @@ struct SettingsView: View {
                     Text("쿼터가 초기화되는 시각에 알려 줍니다. Apple Watch로도 전달됩니다.")
                 }
 
-                PhoneClaudeSection()
+                PhoneClaudeSection { phoneLogin = PhoneLoginRequest() }
 
                 if let snapshot = model.snapshot, snapshot.isDemo != true {
                     Section("연결된 Mac") {
@@ -136,5 +137,6 @@ struct SettingsView: View {
                 }
             }
         }
+        .sheet(item: $phoneLogin) { PhoneClaudeLoginView(request: $0) }
     }
 }

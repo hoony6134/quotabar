@@ -114,17 +114,45 @@ enum PhoneClaudeFetcher {
     }
 }
 
+// MARK: - 계정 목록·로그인 요청
+
+/// 로그인 시트를 띄우는 요청. `accountID`가 있으면 그 계정(대시보드 카드의 Mac 계정 또는 기존 iPhone 계정)에 연결한다.
+struct PhoneLoginRequest: Identifiable {
+    let id = UUID()
+    var label: String = ""
+    var accountID: UUID?
+}
+
+extension MirrorModel {
+    /// 추가 또는 같은 id의 계정을 교체(다시 로그인)하고 바로 조회한다.
+    func savePhoneAccount(_ account: PhoneClaudeAccount) {
+        var list = PhoneClaudeStore.load()
+        if let i = list.firstIndex(where: { $0.id == account.id }) { list[i] = account } else { list.append(account) }
+        PhoneClaudeStore.save(list)
+        phoneAccounts = list
+        Task { await refreshPhone(force: true) }
+    }
+
+    func removePhoneAccounts(at offsets: IndexSet) {
+        var list = PhoneClaudeStore.load()
+        let ids = offsets.map { phoneAccounts[$0].id }
+        list.removeAll { ids.contains($0.id) }
+        PhoneClaudeStore.save(list)
+        phoneAccounts = list
+        Task { await refreshPhone(force: true) }
+    }
+}
+
 // MARK: - 설정 화면
 
-/// 설정의 "iPhone에서 직접 조회" 섹션 — 계정 목록과 브라우저 로그인.
+/// 설정의 "iPhone에서 직접 조회" 섹션. 로그인 시트는 Form 행이 다시 그려져도 닫히지 않게 호출한 쪽(설정 루트)이 띄운다.
 struct PhoneClaudeSection: View {
     @EnvironmentObject var model: MirrorModel
-    @State private var accounts = PhoneClaudeStore.load()
-    @State private var showLogin = false
+    let onAdd: () -> Void
 
     var body: some View {
         Section {
-            ForEach(accounts) { account in
+            ForEach(model.phoneAccounts) { account in
                 VStack(alignment: .leading, spacing: 2) {
                     Text(account.label)
                     if let error = account.lastError {
@@ -132,35 +160,22 @@ struct PhoneClaudeSection: View {
                     }
                 }
             }
-            .onDelete { offsets in
-                accounts.remove(atOffsets: offsets)
-                PhoneClaudeStore.save(accounts)
-                Task { await model.refreshPhone(force: true) }
-            }
-            Button {
-                showLogin = true
-            } label: {
+            .onDelete { model.removePhoneAccounts(at: $0) }
+            Button(action: onAdd) {
                 Label("Claude 계정 추가 (브라우저로 로그인)", systemImage: "safari")
             }
         } header: {
             Text("iPhone에서 직접 조회")
         } footer: {
-            Text("Mac 없이 이 iPhone이 Claude 사용량을 직접 가져옵니다. Mac과 별도 로그인이라 서로 영향을 주지 않으며, 토큰은 이 iPhone 키체인에만 저장됩니다. 약 한 달마다 다시 로그인해야 합니다.")
+            Text("Mac 없이 이 iPhone이 Claude 사용량을 직접 가져옵니다. 대시보드의 Claude 카드에서 'iPhone에서 연결'을 눌러도 됩니다. Mac과 별도 로그인이라 서로 영향을 주지 않으며, 토큰은 이 iPhone 키체인에만 저장됩니다. 약 한 달마다 다시 로그인해야 합니다.")
         }
-        .sheet(isPresented: $showLogin) {
-            PhoneClaudeLoginView { account in
-                accounts.append(account)
-                PhoneClaudeStore.save(accounts)
-                Task { await model.refreshPhone(force: true) }
-            }
-        }
-        .onAppear { accounts = PhoneClaudeStore.load() }
     }
 }
 
 struct PhoneClaudeLoginView: View {
-    let onAdd: (PhoneClaudeAccount) -> Void
+    let request: PhoneLoginRequest
 
+    @EnvironmentObject var model: MirrorModel
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
     @State private var label = ""
@@ -195,8 +210,9 @@ struct PhoneClaudeLoginView: View {
                     }
                 }
             }
-            .navigationTitle("Claude 계정 추가")
+            .navigationTitle(request.accountID == nil ? "Claude 계정 추가" : "iPhone에서 연결")
             .navigationBarTitleDisplayMode(.inline)
+            .onAppear { if label.isEmpty { label = request.label } }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("취소") { dismiss() } }
             }
@@ -230,7 +246,7 @@ struct PhoneClaudeLoginView: View {
                         token: tokens.accessToken,
                         userAgent: ClaudeOAuth.usageUserAgent(cliVersion: pending.config.cliVersion)) ?? "Claude"
                 }
-                onAdd(PhoneClaudeAccount(label: name, tokens: tokens))
+                model.savePhoneAccount(PhoneClaudeAccount(id: request.accountID ?? UUID(), label: name, tokens: tokens))
                 dismiss()
             } catch {
                 self.error = error.localizedDescription

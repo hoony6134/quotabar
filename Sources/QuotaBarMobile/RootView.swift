@@ -27,6 +27,7 @@ struct RootView: View {
             .sheet(isPresented: $showSettings) {
                 SettingsView()
             }
+            .sheet(item: $model.cardLogin) { PhoneClaudeLoginView(request: $0) }
         }
         .tint(.primary)
     }
@@ -168,7 +169,14 @@ struct HeroCard: View {
 }
 
 struct ServiceCard: View {
+    @EnvironmentObject var model: MirrorModel
     let section: ServiceSection
+
+    /// iPhone 직접 조회 계정이면 그 계정 id (`phone-<uuid>`에서 uuid)
+    private var phoneAccountID: UUID? {
+        guard section.id.hasPrefix(WidgetSnapshot.phoneItemPrefix) else { return nil }
+        return UUID(uuidString: String(section.id.dropFirst(WidgetSnapshot.phoneItemPrefix.count)))
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -181,6 +189,9 @@ struct ServiceCard: View {
                     }
                 }
                 Spacer()
+                if section.first.serviceID == "claude" {
+                    connectButton
+                }
             }
             ForEach(section.items) { item in
                 QuotaLine(item: item)
@@ -188,6 +199,27 @@ struct ServiceCard: View {
         }
         .padding(16)
         .glassCard(cornerRadius: 20)
+    }
+
+    /// Mac 계정 카드: 이 iPhone에서 같은 계정에 직접 연결(이후 이 카드는 iPhone이 조회한 값으로 바뀐다).
+    /// iPhone 연결 카드: 조회가 실패하면 다시 로그인.
+    @ViewBuilder
+    private var connectButton: some View {
+        if let id = phoneAccountID {
+            if section.items.contains(where: { $0.syncError != nil }) {
+                Button("다시 로그인") { model.cardLogin = PhoneLoginRequest(label: section.first.label, accountID: id) }
+                    .buttonStyle(.bordered).controlSize(.small)
+            } else {
+                Image(systemName: "iphone").foregroundStyle(.secondary).accessibilityLabel("iPhone에서 직접 조회")
+            }
+        } else {
+            Button {
+                model.cardLogin = PhoneLoginRequest(label: section.first.label, accountID: UUID(uuidString: section.id))
+            } label: {
+                Label("iPhone에서 연결", systemImage: "iphone").font(.caption)
+            }
+            .buttonStyle(.bordered).controlSize(.small)
+        }
     }
 }
 

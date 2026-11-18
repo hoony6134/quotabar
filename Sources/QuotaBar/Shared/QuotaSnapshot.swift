@@ -203,7 +203,9 @@ struct WidgetSnapshot: Codable {
         let phone = loadPhoneItems()
         guard var merged = base ?? (phone.isEmpty ? nil : WidgetSnapshot(generatedAt: Date(), items: [],
                                                                           deviceName: "iPhone")) else { return nil }
-        merged.items = (merged.items.filter { !$0.id.hasPrefix(phoneItemPrefix) } + phone)
+        // 카드에서 연결한 계정은 iPhone 계정 id가 Mac 계정 id와 같다 — 그 Mac 항목은 iPhone 값으로 대체한다.
+        let linked = Set(phone.map { String($0.accountID.dropFirst(phoneItemPrefix.count)) })
+        merged.items = (merged.items.filter { !$0.id.hasPrefix(phoneItemPrefix) && !linked.contains($0.accountID) } + phone)
             .sorted { $0.percent > $1.percent }
         return merged
     }
